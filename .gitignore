@@ -1,1 +1,5 @@
 /.vscode
+/models
+/subtitle2go_env
+*.whl
+*.wav

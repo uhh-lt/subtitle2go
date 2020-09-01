@@ -10,8 +10,10 @@ from kaldi.nnet3 import NnetSimpleComputationOptions
 from kaldi.util.table import SequentialMatrixReader
 import yaml
 
-# yaml 
-config_file = "kaldi_tuda_de_nnet3_chain2.yaml"
+model_dir = "models/de_683k_nnet3chain_tdnn1f_2048_sp_bi_smaller_fst/"
+
+# yaml #TODO use YAML File
+config_file = "models/kaldi_tuda_de_nnet3_chain2.yaml"
 with open(config_file, 'r') as stream:
     model_yaml = yaml.safe_load(stream)
 decoder_yaml_opts = model_yaml['decoder']
@@ -28,22 +30,22 @@ decodable_opts.frame_subsampling_factor = 3
 decodable_opts.frames_per_chunk = 150
 # hier yaml Datei einfügen
 asr = NnetLatticeFasterRecognizer.from_files(
-    "final.mdl", "HCLG.fst", "words.txt",
+    model_dir + "final.mdl", model_dir + "HCLG.fst", model_dir + "words.txt",
     decoder_opts=decoder_opts, decodable_opts=decodable_opts)
 
 
 # Construct symbol table
-symbols = SymbolTable.read_text("words.txt")
+symbols = SymbolTable.read_text(model_dir + "words.txt")
 phi_label = symbols.find_index("#0")
 
 # # Construct LM rescorer
 # rescorer = LatticeLmRescorer.from_files("G.fst", "G.rescore.fst", phi_label)
 
 # Define feature pipelines as Kaldi rspecifiers
-feats_rspec = "ark:compute-mfcc-feats --config=conf/mfcc_hires.conf scp:wav.scp ark:- |"
+feats_rspec = "ark:compute-mfcc-feats --config=%sconf/mfcc_hires.conf scp:wav.scp ark:- |" % model_dir
 ivectors_rspec = (
-    "ark:compute-mfcc-feats --config=conf/mfcc_hires.conf scp:wav.scp ark:-"
-    " | ivector-extract-online2 --config=ivector.conf ark:spk2utt ark:- ark:- |"
+    "ark:compute-mfcc-feats --config=%sconf/mfcc_hires.conf scp:wav.scp ark:-"
+    " | ivector-extract-online2 --config=%sivector_extractor/ivector_extractor.conf ark:spk2utt ark:- ark:- |" % (model_dir, model_dir)
     )
 # Decode wav files
 with SequentialMatrixReader(feats_rspec) as f, \
