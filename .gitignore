@@ -1,5 +1,7 @@
 /.vscode
 /models
 /subtitle2go_env
+/pykaldi
 *.whl
 *.wav
+*.vtt

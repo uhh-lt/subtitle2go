@@ -12,6 +12,7 @@ pykaldi/tools/install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python
 ```
 And than start:
 Put a wavefile in the directory (new.wav) and start the program
+The subtitle File is generated as subtitle.vtt
 ```
 start.sh
 ```

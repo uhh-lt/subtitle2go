@@ -8,11 +8,12 @@ from kaldi.fstext import SymbolTable, shortestpath, indices_to_symbols
 from kaldi.fstext.utils import get_linear_symbol_sequence
 from kaldi.nnet3 import NnetSimpleComputationOptions
 from kaldi.util.table import SequentialMatrixReader
+from kaldi.lat import functions
 import yaml
 
 model_dir = "models/de_683k_nnet3chain_tdnn1f_2048_sp_bi_smaller_fst/"
 
-# yaml #TODO use YAML File
+# yaml TODO use YAML File
 config_file = "models/kaldi_tuda_de_nnet3_chain2.yaml"
 with open(config_file, 'r') as stream:
     model_yaml = yaml.safe_load(stream)
@@ -53,5 +54,50 @@ with SequentialMatrixReader(feats_rspec) as f, \
     for (fkey, feats), (ikey, ivectors) in zip(f, i):
         assert(fkey == ikey)
         out = asr.decode((feats, ivectors))
-        words, _, _ = get_linear_symbol_sequence(shortestpath(out["lattice"]))
-        print(fkey, " ".join(indices_to_symbols(symbols, words)), flush=True)
+        BP = functions.compact_lattice_shortest_path(out["lattice"])
+        words, _, _ = get_linear_symbol_sequence(shortestpath(BP))
+        # print(functions.compact_lattice_shortest_path(out["lattice"]))
+        Timing = functions.compact_lattice_to_word_alignment(BP)
+        # print(fkey, " ".join(indices_to_symbols(symbols, words)), flush=True)
+
+Test = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
+VTT = zip(Test, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
+VTT=list(VTT)
+sequences = [["" for x in range(3)] for y in range(30)] # TODO: Variable Größe statt fester Arraygröße
+
+def ArrayToVTT():
+    wcounter = 0
+    scounter = 0
+    for a in VTT:
+        if wcounter < 10:
+            if wcounter == 0: # erstes Wort in der Sequenz
+                sequences[scounter][1] = a[1] # Setzt Anfangstiming der Sequenz
+            sequences[scounter][0] = sequences[scounter][0] + " " + (a[0]) # TODO: Vor jeder Sequenz ist immer ein überschüssiges Leerzeichen
+            wcounter += 1
+            sequences[scounter][2] = a[1] + a[2] # Setzt Endtiming der Sequenz
+        else:
+            wcounter = 1
+            scounter += 1
+            sequences[scounter][0] = sequences[scounter][0] + " " + (a[0])
+            sequences[scounter][1] = a[1]
+            sequences[scounter][2] = a[1] + a[2]            
+    # print(sequences)
+
+def createVTT():
+    file = open("subtitle.vtt", "w") # TODO: In abhängigkeit zu Wave Datei / etc benennen
+    file.write("WEBVTT\n")
+    file.write("\n")
+    sequenz_counter = 1
+    for a in sequences:
+        start_seconds = int(a[1] / 32) # Start der Sequenz in Sekunden TODO: Framerate bestimmen
+        end_seconds = int(a[2] / 32) # Ende der Sequenz in Sekunden
+        file.write(str(sequenz_counter) + "\n") # Nummer der aktuellen Sequenz TODO: Direkt in die Datenstruktur sequences einpflegen
+        timestring = "00:" + str(int(start_seconds / 60)) + ":" + str(start_seconds % 60) + ".000 --> " + "00:" + str(int(end_seconds / 60)) + ":" + str((end_seconds % 60)) + ".000" + "\n" # Generiert 00:00:000 --> 00:00:000 TODO: Noch nicht nach Standard
+        file.write(timestring)
+        file.write(a[0] + "\n")
+        file.write("\n")
+        sequenz_counter += 1
+    file.close()
+
+ArrayToVTT()
+createVTT()
