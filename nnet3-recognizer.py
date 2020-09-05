@@ -11,14 +11,13 @@ from kaldi.util.table import SequentialMatrixReader
 from kaldi.lat import functions
 import yaml
 
-model_dir = "models/de_683k_nnet3chain_tdnn1f_2048_sp_bi_smaller_fst/"
+models_dir = "models/"
 
-# yaml TODO use YAML File
+# read yaml File
 config_file = "models/kaldi_tuda_de_nnet3_chain2.yaml"
 with open(config_file, 'r') as stream:
     model_yaml = yaml.safe_load(stream)
 decoder_yaml_opts = model_yaml['decoder']
-# print (decoder_yaml_opts)
 
 
 # Construct recognizer
@@ -31,22 +30,20 @@ decodable_opts.frame_subsampling_factor = 3
 decodable_opts.frames_per_chunk = 150
 # hier yaml Datei einfügen
 asr = NnetLatticeFasterRecognizer.from_files(
-    model_dir + "final.mdl", model_dir + "HCLG.fst", model_dir + "words.txt",
+    models_dir + decoder_yaml_opts["model"], models_dir + decoder_yaml_opts["fst"], models_dir + decoder_yaml_opts["word-syms"],
     decoder_opts=decoder_opts, decodable_opts=decodable_opts)
 
 
 # Construct symbol table
-symbols = SymbolTable.read_text(model_dir + "words.txt")
+symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts["word-syms"])
 phi_label = symbols.find_index("#0")
 
-# # Construct LM rescorer
-# rescorer = LatticeLmRescorer.from_files("G.fst", "G.rescore.fst", phi_label)
 
 # Define feature pipelines as Kaldi rspecifiers
-feats_rspec = "ark:compute-mfcc-feats --config=%sconf/mfcc_hires.conf scp:wav.scp ark:- |" % model_dir
+feats_rspec = "ark:compute-mfcc-feats --config=%s scp:wav.scp ark:- |" % (models_dir + decoder_yaml_opts["mfcc-config"])
 ivectors_rspec = (
-    "ark:compute-mfcc-feats --config=%sconf/mfcc_hires.conf scp:wav.scp ark:-"
-    " | ivector-extract-online2 --config=%sivector_extractor/ivector_extractor.conf ark:spk2utt ark:- ark:- |" % (model_dir, model_dir)
+    "ark:compute-mfcc-feats --config=%s scp:wav.scp ark:-"
+    " | ivector-extract-online2 --config=%s ark:spk2utt ark:- ark:- |" % ((models_dir + decoder_yaml_opts["mfcc-config"]), (models_dir + decoder_yaml_opts["ivector-extraction-config"]))
     )
 # Decode wav files
 with SequentialMatrixReader(feats_rspec) as f, \
@@ -62,10 +59,11 @@ with SequentialMatrixReader(feats_rspec) as f, \
 
 Test = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
 VTT = zip(Test, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
-VTT=list(VTT)
+VTT = list(VTT)
+print(VTT)
 sequences = [["" for x in range(3)] for y in range(30)] # TODO: Variable Größe statt fester Arraygröße
 
-def ArrayToVTT():
+def ArrayToSequences():
     wcounter = 0
     scounter = 0
     for a in VTT:
@@ -99,5 +97,5 @@ def createVTT():
         sequenz_counter += 1
     file.close()
 
-ArrayToVTT()
+ArrayToSequences()
 createVTT()
