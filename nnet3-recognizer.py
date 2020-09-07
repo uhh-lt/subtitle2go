@@ -10,15 +10,40 @@ from kaldi.nnet3 import NnetSimpleComputationOptions
 from kaldi.util.table import SequentialMatrixReader
 from kaldi.lat import functions
 import yaml
+import math
+import argparse
+import ffmpeg
+# import os
 
 models_dir = "models/"
 
-# read yaml File
+# TODO: Umgebungsvariablen setzen oder Kaldi binaries in virtenv verschieben
+# os.environ["KALDI_ROOT"] = "pykaldi/tools/kaldi"
+# os.environ["PATH"] = "pykaldi/tools/kaldi/src/lmbin/:pykaldi/tools/kaldi/../kaldi_lm/:" + os.getcwd() + "/utils/:pykaldi/tools/kaldi/src/bin:pykaldi/tools/kaldi/tools/openfst/bin:pykaldi/tools/kaldi/src/fstbin/:pykaldi/tools/kaldi/src/gmmbin/:pykaldi/tools/kaldi/src/featbin/:pykaldi/tools/kaldi/src/lm/:pykaldi/tools/kaldi/src/sgmmbin/:pykaldi/tools/kaldi/src/sgmm2bin/:pykaldi/tools/kaldi/src/fgmmbin/:pykaldi/tools/kaldi/src/latbin/:pykaldi/tools/kaldi/src/nnetbin:pykaldi/tools/kaldi/src/nnet2bin/:pykaldi/tools/kaldi/src/online2bin/:pykaldi/tools/kaldi/src/ivectorbin/:pykaldi/tools/kaldi/src/kwsbin:pykaldi/tools/kaldi/src/nnet3bin:pykaldi/tools/kaldi/src/chainbin:pykaldi/tools/kaldi/tools/sph2pipe_v2.5/:pykaldi/tools/kaldi/src/rnnlmbin:$PWD:$PATH"
+# os.environ["PATH"] = "$KALDI_ROOT/src/lmbin/:$KALDI_ROOT/../kaldi_lm/:$PWD/utils/:$KALDI_ROOT/src/bin:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/src/fstbin/:$KALDI_ROOT/src/gmmbin/:$KALDI_ROOT/src/featbin/:$KALDI_ROOT/src/lm/:$KALDI_ROOT/src/sgmmbin/:$KALDI_ROOT/src/sgmm2bin/:$KALDI_ROOT/src/fgmmbin/:$KALDI_ROOT/src/latbin/:$KALDI_ROOT/src/nnetbin:$KALDI_ROOT/src/nnet2bin/:$KALDI_ROOT/src/online2bin/:$KALDI_ROOT/src/ivectorbin/:$KALDI_ROOT/src/kwsbin:$KALDI_ROOT/src/nnet3bin:$KALDI_ROOT/src/chainbin:$KALDI_ROOT/tools/sph2pipe_v2.5/:$KALDI_ROOT/src/rnnlmbin:$PWD:$PATH"
+
+# Read yaml File
 config_file = "models/kaldi_tuda_de_nnet3_chain2.yaml"
 with open(config_file, 'r') as stream:
     model_yaml = yaml.safe_load(stream)
 decoder_yaml_opts = model_yaml['decoder']
 
+# Argument parser # TODO: Aussagekräftige Fehlermeldung
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--filename", help="The name of the audiofile", type=str)
+args = parser.parse_args()
+filenameS = args.filename.rpartition(".")[0]
+print(filenameS)
+filename = args.filename
+
+# ffmpeg
+(
+    ffmpeg
+    .input(filename)
+    .output("new.wav", acodec='pcm_s16le', ac=1, ar='16k')
+    .overwrite_output()
+    .run()
+)
 
 # Construct recognizer
 decoder_opts = LatticeFasterDecoderOptions()
@@ -28,7 +53,6 @@ decodable_opts = NnetSimpleComputationOptions()
 decodable_opts.acoustic_scale = 1.0
 decodable_opts.frame_subsampling_factor = 3
 decodable_opts.frames_per_chunk = 150
-# hier yaml Datei einfügen
 asr = NnetLatticeFasterRecognizer.from_files(
     models_dir + decoder_yaml_opts["model"], models_dir + decoder_yaml_opts["fst"], models_dir + decoder_yaml_opts["word-syms"],
     decoder_opts=decoder_opts, decodable_opts=decodable_opts)
@@ -45,6 +69,8 @@ ivectors_rspec = (
     "ark:compute-mfcc-feats --config=%s scp:wav.scp ark:-"
     " | ivector-extract-online2 --config=%s ark:spk2utt ark:- ark:- |" % ((models_dir + decoder_yaml_opts["mfcc-config"]), (models_dir + decoder_yaml_opts["ivector-extraction-config"]))
     )
+
+
 # Decode wav files
 with SequentialMatrixReader(feats_rspec) as f, \
      SequentialMatrixReader(ivectors_rspec) as i:
@@ -60,42 +86,56 @@ with SequentialMatrixReader(feats_rspec) as f, \
 Test = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
 VTT = zip(Test, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
 VTT = list(VTT)
-print(VTT)
-sequences = [["" for x in range(3)] for y in range(30)] # TODO: Variable Größe statt fester Arraygröße
+len_Array = math.ceil(len(VTT) / 10)
+sequences = [["" for x in range(3)] for y in range(len_Array)]
 
-def ArrayToSequences():
+
+
+def ArrayToSequences(): # TODO: Überarbeiten wenn Sequenztrennung geklärt
     wcounter = 0
     scounter = 0
     for a in VTT:
         if wcounter < 10:
             if wcounter == 0: # erstes Wort in der Sequenz
                 sequences[scounter][1] = a[1] # Setzt Anfangstiming der Sequenz
-            sequences[scounter][0] = sequences[scounter][0] + " " + (a[0]) # TODO: Vor jeder Sequenz ist immer ein überschüssiges Leerzeichen
+                sequences[scounter][0] = a[0]
+            else:
+                sequences[scounter][0] = sequences[scounter][0] + " " + a[0]
             wcounter += 1
             sequences[scounter][2] = a[1] + a[2] # Setzt Endtiming der Sequenz
         else:
             wcounter = 1
             scounter += 1
-            sequences[scounter][0] = sequences[scounter][0] + " " + (a[0])
+            sequences[scounter][0] = a[0]
             sequences[scounter][1] = a[1]
             sequences[scounter][2] = a[1] + a[2]            
-    # print(sequences)
+    print(sequences)
 
-def createVTT():
-    file = open("subtitle.vtt", "w") # TODO: In abhängigkeit zu Wave Datei / etc benennen
-    file.write("WEBVTT\n")
-    file.write("\n")
+
+def createSubtitle(subtitleFormat):
+    if subtitleFormat == "vtt":
+        file = open(filenameS + ".vtt", "w")
+        file.write("WEBVTT\n\n")
+        separator = "."
+    elif subtitleFormat == "srt":
+        file = open(filenameS + ".srt", "w")
+        separator = ","
+
     sequenz_counter = 1
-    for a in sequences:
-        start_seconds = int(a[1] / 32) # Start der Sequenz in Sekunden TODO: Framerate bestimmen
-        end_seconds = int(a[2] / 32) # Ende der Sequenz in Sekunden
+    for a in sequences: 
+        start_seconds = a[1] / 33 # Start der Sequenz in Sekunden TODO: Framerate bestimmen
+        end_seconds = a[2] / 33 # Ende der Sequenz in Sekunden
         file.write(str(sequenz_counter) + "\n") # Nummer der aktuellen Sequenz TODO: Direkt in die Datenstruktur sequences einpflegen
-        timestring = "00:" + str(int(start_seconds / 60)) + ":" + str(start_seconds % 60) + ".000 --> " + "00:" + str(int(end_seconds / 60)) + ":" + str((end_seconds % 60)) + ".000" + "\n" # Generiert 00:00:000 --> 00:00:000 TODO: Noch nicht nach Standard
+        if start_seconds == 0: # Erste Sequenz darf nicht bei 0 starten sonst wird sie nicht verarbeitet
+            time_start = "00:00:00{}001" .format(separator)
+        else:
+            time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600), int(start_seconds / 60), int(start_seconds % 60), separator)
+        time_end = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(end_seconds / 3600), int(end_seconds / 60), int(end_seconds % 60), separator)
+        timestring = time_start + " --> " + time_end + "\n"
         file.write(timestring)
-        file.write(a[0] + "\n")
-        file.write("\n")
+        file.write(a[0] + "\n\n")
         sequenz_counter += 1
     file.close()
 
 ArrayToSequences()
-createVTT()
+createSubtitle("vtt")

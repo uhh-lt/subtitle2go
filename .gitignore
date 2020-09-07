@@ -4,4 +4,6 @@
 /pykaldi
 *.whl
 *.wav
+*.srt
+*.mp4
 *.vtt
