@@ -28,22 +28,26 @@ with open(config_file, 'r') as stream:
     model_yaml = yaml.safe_load(stream)
 decoder_yaml_opts = model_yaml['decoder']
 
-# Argument parser # TODO: Aussagekräftige Fehlermeldung
+# Argument parser
 parser = argparse.ArgumentParser()
-parser.add_argument("-f", "--filename", help="The name of the audiofile", type=str)
+parser.add_argument("-f", "--filename", help="The path of the mediafile", type=str, required=True)
+parser.add_argument("-s", "--subtitle", help="The output subtitleformat (vtt or srt). Default=vtt", required=False, default="vtt", choices=["vtt", "srt"])
+# parser.add_argument("-c", "--convert", help="Disable ffmpeg converter", required=False, action="store_false") # TODO: Wenn nicht konvertiert wird muss die wav.scp angepasst werden auf die neue Datei
 args = parser.parse_args()
 filenameS = args.filename.rpartition(".")[0]
-print(filenameS)
 filename = args.filename
+subtitleFormat = args.subtitle
+useFFMPEG = args.convert
 
 # ffmpeg
-(
-    ffmpeg
-    .input(filename)
-    .output("new.wav", acodec='pcm_s16le', ac=1, ar='16k')
-    .overwrite_output()
-    .run()
-)
+if useFFMPEG:
+    (
+        ffmpeg
+        .input(filename)
+        .output("new.wav", acodec='pcm_s16le', ac=1, ar='16k')
+        .overwrite_output()
+        .run()
+    )
 
 # Construct recognizer
 decoder_opts = LatticeFasterDecoderOptions()
@@ -71,7 +75,7 @@ ivectors_rspec = (
     )
 
 
-# Decode wav files
+# Decode wav files TODO: Gibt es eine Möglichkeit statt der wav.scp Datei direkt einen Stream an (py)kaldi zu übergeben um nicht erst die Datei auf die Festplatte schreiben zu müssen?
 with SequentialMatrixReader(feats_rspec) as f, \
      SequentialMatrixReader(ivectors_rspec) as i:
     for (fkey, feats), (ikey, ivectors) in zip(f, i):
@@ -109,7 +113,7 @@ def ArrayToSequences(): # TODO: Überarbeiten wenn Sequenztrennung geklärt
             sequences[scounter][0] = a[0]
             sequences[scounter][1] = a[1]
             sequences[scounter][2] = a[1] + a[2]            
-    print(sequences)
+    # print(sequences)
 
 
 def createSubtitle(subtitleFormat):
@@ -138,4 +142,4 @@ def createSubtitle(subtitleFormat):
     file.close()
 
 ArrayToSequences()
-createSubtitle("vtt")
+createSubtitle(subtitleFormat)
