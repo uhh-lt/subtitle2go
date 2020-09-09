@@ -32,7 +32,7 @@ decoder_yaml_opts = model_yaml['decoder']
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--filename", help="The path of the mediafile", type=str, required=True)
 parser.add_argument("-s", "--subtitle", help="The output subtitleformat (vtt or srt). Default=vtt", required=False, default="vtt", choices=["vtt", "srt"])
-# parser.add_argument("-c", "--convert", help="Disable ffmpeg converter", required=False, action="store_false") # TODO: Wenn nicht konvertiert wird muss die wav.scp angepasst werden auf die neue Datei
+parser.add_argument("-c", "--convert", help="Disable ffmpeg converter", required=False, action="store_false") # TODO: Wenn nicht konvertiert wird muss die wav.scp angepasst werden auf die neue Datei
 args = parser.parse_args()
 filenameS = args.filename.rpartition(".")[0]
 filename = args.filename
@@ -127,8 +127,8 @@ def createSubtitle(subtitleFormat):
 
     sequenz_counter = 1
     for a in sequences: 
-        start_seconds = a[1] / 33 # Start der Sequenz in Sekunden TODO: Framerate bestimmen
-        end_seconds = a[2] / 33 # Ende der Sequenz in Sekunden
+        start_seconds = a[1] / 33.3 # Start der Sequenz in Sekunden TODO: Framerate bestimmen
+        end_seconds = a[2] / 33.3 # Ende der Sequenz in Sekunden
         file.write(str(sequenz_counter) + "\n") # Nummer der aktuellen Sequenz TODO: Direkt in die Datenstruktur sequences einpflegen
         if start_seconds == 0: # Erste Sequenz darf nicht bei 0 starten sonst wird sie nicht verarbeitet
             time_start = "00:00:00{}001" .format(separator)

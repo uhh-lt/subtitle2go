@@ -2,8 +2,8 @@
 
 ## Installguide
 ```
-pip install numpy pyyaml ffmpeg-python
 virtualenv -p /usr/bin/python3.7 subtitle2go_env
+pip install numpy pyyaml ffmpeg-python
 wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 source ./subtitle2go_env/bin/activate
 pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
