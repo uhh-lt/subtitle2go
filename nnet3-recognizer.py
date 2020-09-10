@@ -127,14 +127,14 @@ def createSubtitle(subtitleFormat):
 
     sequenz_counter = 1
     for a in sequences: 
-        start_seconds = a[1] / 33.3 # Start der Sequenz in Sekunden TODO: Framerate bestimmen
-        end_seconds = a[2] / 33.3 # Ende der Sequenz in Sekunden
+        start_seconds = a[1] / 33.333 # Start der Sequenz in Sekunden 
+        end_seconds = a[2] / 33.333 # Ende der Sequenz in Sekunden
         file.write(str(sequenz_counter) + "\n") # Nummer der aktuellen Sequenz TODO: Direkt in die Datenstruktur sequences einpflegen
         if start_seconds == 0: # Erste Sequenz darf nicht bei 0 starten sonst wird sie nicht verarbeitet
             time_start = "00:00:00{}001" .format(separator)
         else:
-            time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600), int(start_seconds / 60), int(start_seconds % 60), separator)
-        time_end = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(end_seconds / 3600), int(end_seconds / 60), int(end_seconds % 60), separator)
+            time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600), int((start_seconds / 60) % 60), int(start_seconds % 60), separator) # TODO: Fehler ab 1h : 01:60:00 Bei Ende
+        time_end = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(end_seconds / 3600), int((end_seconds / 60) % 60), int(end_seconds % 60), separator)
         timestring = time_start + " --> " + time_end + "\n"
         file.write(timestring)
         file.write(a[0] + "\n\n")
