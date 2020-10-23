@@ -13,10 +13,11 @@ import yaml
 import math
 import argparse
 import ffmpeg
-# import os
+import os
+import segment_text
 
 models_dir = "models/"
-
+sequences = []
 # TODO: Umgebungsvariablen setzen oder Kaldi binaries in virtualenv verschieben
 # os.environ["KALDI_ROOT"] = "pykaldi/tools/kaldi"
 # os.environ["PATH"] = "pykaldi/tools/kaldi/src/lmbin/:pykaldi/tools/kaldi/../kaldi_lm/:" + os.getcwd() + "/utils/:pykaldi/tools/kaldi/src/bin:pykaldi/tools/kaldi/tools/openfst/bin:pykaldi/tools/kaldi/src/fstbin/:pykaldi/tools/kaldi/src/gmmbin/:pykaldi/tools/kaldi/src/featbin/:pykaldi/tools/kaldi/src/lm/:pykaldi/tools/kaldi/src/sgmmbin/:pykaldi/tools/kaldi/src/sgmm2bin/:pykaldi/tools/kaldi/src/fgmmbin/:pykaldi/tools/kaldi/src/latbin/:pykaldi/tools/kaldi/src/nnetbin:pykaldi/tools/kaldi/src/nnet2bin/:pykaldi/tools/kaldi/src/online2bin/:pykaldi/tools/kaldi/src/ivectorbin/:pykaldi/tools/kaldi/src/kwsbin:pykaldi/tools/kaldi/src/nnet3bin:pykaldi/tools/kaldi/src/chainbin:pykaldi/tools/kaldi/tools/sph2pipe_v2.5/:pykaldi/tools/kaldi/src/rnnlmbin:$PWD:$PATH"
@@ -87,15 +88,14 @@ with SequentialMatrixReader(feats_rspec) as f, \
         Timing = functions.compact_lattice_to_word_alignment(BP)
         # print(fkey, " ".join(indices_to_symbols(symbols, words)), flush=True)
 
-Test = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
-VTT = zip(Test, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
+Words = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
+VTT = zip(Words, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
 VTT = list(VTT)
 len_Array = math.ceil(len(VTT) / 10)
-sequences = [["" for x in range(3)] for y in range(len_Array)]
-
 
 
 def ArrayToSequences(): # TODO: Überarbeiten wenn Sequenztrennung geklärt
+    sequences = [["" for x in range(3)] for y in range(len_Array)]
     wcounter = 0
     scounter = 0
     for a in VTT:
@@ -112,11 +112,11 @@ def ArrayToSequences(): # TODO: Überarbeiten wenn Sequenztrennung geklärt
             scounter += 1
             sequences[scounter][0] = a[0]
             sequences[scounter][1] = a[1]
-            sequences[scounter][2] = a[1] + a[2]            
-    # print(sequences)
+            sequences[scounter][2] = a[1] + a[2]
+    print(sequences)
 
 
-def createSubtitle(subtitleFormat):
+def CreateSubtitle(subtitleFormat):
     if subtitleFormat == "vtt":
         file = open(filenameS + ".vtt", "w")
         file.write("WEBVTT\n\n")
@@ -126,7 +126,7 @@ def createSubtitle(subtitleFormat):
         separator = ","
 
     sequenz_counter = 1
-    for a in sequences: 
+    for a in sequences:
         start_seconds = a[1] / 33.333 # Start der Sequenz in Sekunden 
         end_seconds = a[2] / 33.333 # Ende der Sequenz in Sekunden
         file.write(str(sequenz_counter) + "\n") # Nummer der aktuellen Sequenz TODO: Direkt in die Datenstruktur sequences einpflegen
@@ -141,5 +141,47 @@ def createSubtitle(subtitleFormat):
         sequenz_counter += 1
     file.close()
 
-ArrayToSequences()
-createSubtitle(subtitleFormat)
+def AddInterpunctuation():
+    global VTT
+    print("Starting Interpunction")
+    raw_file = open("raw_text.txt", "w")
+    raw_file.write(' '.join(Words))
+    raw_file.close() # Schreibt die ASR Daten zu einer neuen Datei
+    os.system("./punctuator.sh") # Startet Punctuator2 extern (fügt Interpunktion hinzu und macht den Text lesbar)
+    file_punct = open("punc_output_readable.txt", "r") # öffnet den interpunktierten Text
+    punct_list = file_punct.read().split(" ")
+    VTT_punc = []
+    for a,b in zip(punct_list, VTT): # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den neuen
+        if a != b[0]:
+            VTT_punc.append((a, b[1], b[2]))
+        else:
+            VTT_punc.append(b)
+    VTT = VTT_punc
+
+def Segmentierung():
+    global sequences
+    word_string = ""
+    word_counter = 0
+    print("Begin Segmentation")
+    for e in VTT:
+        word_string = word_string + " " + e[0]
+
+    segments = segment_text.segment_beamsearch(word_string) # Die Segmentierung
+
+    for segment in segments:
+        cleanSegment = list(filter(None, segment.split(" "))) # Trennt das Segment in einzelne Wörter, entfernt leere Objekte vom String und speichert eine Liste
+        stringSegment = " ".join(cleanSegment) # Baut einen neuen String
+        seg_len = len(cleanSegment) # Länge des aktuellen Segments
+        if word_counter != 0: # Sonst überschneiden sich die Untertitel
+            begin_segment = VTT[word_counter+1][1]
+        else:
+            begin_segment = VTT[word_counter][1]
+        end_segment =  VTT[word_counter + seg_len][1] + VTT[word_counter + seg_len][2]
+        sequences.append([stringSegment, begin_segment, end_segment])
+        word_counter = word_counter + seg_len
+
+
+AddInterpunctuation()
+Segmentierung()
+# ArrayToSequences()
+CreateSubtitle(subtitleFormat)

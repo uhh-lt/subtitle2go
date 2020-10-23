@@ -1,5 +1,12 @@
 # subtitle2go
 
+## Changelog
+
+### 24.10.2020
++ Added Punctuation Model
++ Added advanced Segmentation
+
+
 ## Requirements
 + Ubuntu 18.04
 + Python 3.7
@@ -12,12 +19,15 @@ git clone https://github.com/uhh-lt/subtitle2go
 cd subtitle2go/
 virtualenv -p /usr/bin/python3.7 subtitle2go_env
 source subtitle2go_env/bin/activate
-pip install numpy pyyaml ffmpeg-python
+pip install numpy pyyaml ffmpeg-python theano spacy
+python -m spacy download de
 wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 ./download_models.sh
 git clone https://github.com/pykaldi/pykaldi
 pykaldi/tools/install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+git clone https://github.com/ottokart/punctuator2.git
+
 ```
 Put a mediafile (eg `mediafile.mp4`) in the directory and change in the third row the parameter in the `start.sh` file to:
 ```
