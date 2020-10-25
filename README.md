@@ -13,27 +13,47 @@
 
 ## Installguide
 ```
+#make sure you have Python 3.7 installed and also its dev package:
+sudo apt-get install python3.7 python3.7-dev
+
+# Now clone the subtitle2go package somwhere:
 mkdir ~/projects/
 cd ~/projects/
 git clone https://github.com/uhh-lt/subtitle2go
 cd subtitle2go/
+
+# create virtual env and install python dependencies:
+
 virtualenv -p /usr/bin/python3.7 subtitle2go_env
 source subtitle2go_env/bin/activate
 pip install numpy pyyaml ffmpeg-python theano spacy
 python -m spacy download de
+
+# Now install PyKaldi
 wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
-./download_models.sh
 git clone https://github.com/pykaldi/pykaldi
 pykaldi/tools/install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+
+# Install punctuator2 for automatic punctuation
 git clone https://github.com/ottokart/punctuator2.git
 
+# Patch punctuator2:
+
+Open punctuator2/models.py in a file editor, go to line 54 and replace "from . import models" with "import models"
+
+# Download pretrained models:
+./download_models.sh
 ```
-Put a mediafile (eg `mediafile.mp4`) in the directory and change in the third row the parameter in the `start.sh` file to:
+Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
+
 ```
+source subtitle2go_env/bin/activate
+. path.sh
 python nnet3-recognizer.py -f "mediafile.mp4"
 ```
-Then start the `start.sh` and the subtitle is generated as `mediafile.vtt`
+
+The subtitle is then generated as `mediafile.vtt`
 
 ## FAQ
 
