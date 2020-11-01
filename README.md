@@ -3,9 +3,8 @@
 ## Changelog
 
 ### 24.10.2020
-+ Added Punctuation Model
-+ Added advanced Segmentation
-
++ Added punctuation model (with punctuator2)
++ Added a better subtitle segmentation algorithm
 
 ## Requirements
 + Ubuntu 18.04
