@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 from __future__ import print_function
 
 from kaldi.asr import NnetLatticeFasterRecognizer, LatticeLmRescorer
@@ -78,7 +77,7 @@ ivectors_rspec = (
 
 # Decode wav files TODO: Gibt es eine Möglichkeit statt der wav.scp Datei direkt einen Stream an (py)kaldi zu übergeben um nicht erst die Datei auf die Festplatte schreiben zu müssen?
 with SequentialMatrixReader(feats_rspec) as f, \
-     SequentialMatrixReader(ivectors_rspec) as i:
+    SequentialMatrixReader(ivectors_rspec) as i:
     for (fkey, feats), (ikey, ivectors) in zip(f, i):
         assert(fkey == ikey)
         out = asr.decode((feats, ivectors))
@@ -89,12 +88,11 @@ with SequentialMatrixReader(feats_rspec) as f, \
         # print(fkey, " ".join(indices_to_symbols(symbols, words)), flush=True)
 
 Words = indices_to_symbols(symbols, Timing[0]) # Wandelt die Word Nummern um zu Wörtern
-VTT = zip(Words, Timing[1], Timing[2]) # Erstellt Datenstruktur (Wort, Wortanfang (Frames), Wortende(Frames))
-VTT = list(VTT)
-len_Array = math.ceil(len(VTT) / 10)
+VTT = list(map(list, zip(Words, Timing[1], Timing[2]))) # Erstellt Datenstruktur (Wort, Wortanfang(Frames), Wortende(Frames))
 
 
-def ArrayToSequences(): # TODO: Überarbeiten wenn Sequenztrennung geklärt
+def ArrayToSequences(): # Alte Sequenztrennung nach 10 Wörtern
+    len_Array = math.ceil(len(VTT) / 10)
     sequences = [["" for x in range(3)] for y in range(len_Array)]
     wcounter = 0
     scounter = 0
@@ -141,6 +139,7 @@ def CreateSubtitle(subtitleFormat):
         sequenz_counter += 1
     file.close()
 
+
 def AddInterpunctuation():
     global VTT
     print("Starting Interpunction")
@@ -148,32 +147,45 @@ def AddInterpunctuation():
     raw_file.write(' '.join(Words))
     raw_file.close() # Schreibt die ASR Daten zu einer neuen Datei
     os.system("./punctuator.sh") # Startet Punctuator2 extern (fügt Interpunktion hinzu und macht den Text lesbar)
-    file_punct = open("punc_output_readable.txt", "r") # öffnet den interpunktierten Text
+    file_punct = open("punc_output_readable.txt", "r") # liest den interpunktierten Text ein
     punct_list = file_punct.read().split(" ")
     VTT_punc = []
-    for a,b in zip(punct_list, VTT): # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den neuen
+    for a,b in zip(punct_list, VTT): # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den Neuen
         if a != b[0]:
-            VTT_punc.append((a, b[1], b[2]))
+            VTT_punc.append([a, b[1], b[2]])
         else:
             VTT_punc.append(b)
     VTT = VTT_punc
 
+
 def Segmentierung():
     global sequences
+
     word_string = ""
     word_counter = 0
     print("Begin Segmentation")
     for e in VTT:
-        word_string = word_string + " " + e[0]
-
+        if e[0] == "<UNK>": # Die <UNK> Token werden in der Segmentierung manchmal getrennt.
+            word_string = word_string + " " + "UNK"
+        else:
+            word_string = word_string + " " + e[0]
     segments = segment_text.segment_beamsearch(word_string) # Die Segmentierung
+    
+    new_segments = []
+    new_segments.append(segments[0])
+    for current in segments[1:]: # Sollte durch die Segmentierung ein Satzzeichen an den Anfang einer Zeile gerutscht sein wird es hier korrigiert
+        if current[0] == "," or current[0] == ".":
+            new_segments[:1][0] = new_segments[:1][0] + current[0]
+            current = current[2:]
+        new_segments.append(current)
+    segments = new_segments
 
     for segment in segments:
         cleanSegment = list(filter(None, segment.split(" "))) # Trennt das Segment in einzelne Wörter, entfernt leere Objekte vom String und speichert eine Liste
         stringSegment = " ".join(cleanSegment) # Baut einen neuen String
         seg_len = len(cleanSegment) # Länge des aktuellen Segments
         if word_counter != 0: # Sonst überschneiden sich die Untertitel
-            begin_segment = VTT[word_counter+1][1]
+            begin_segment = VTT[word_counter + 1][1]
         else:
             begin_segment = VTT[word_counter][1]
         end_segment =  VTT[word_counter + seg_len][1] + VTT[word_counter + seg_len][2]

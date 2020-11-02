@@ -31,7 +31,7 @@ def find_node(common_parent, search_node):
 
 # Todo: allow other languages than German
 def segment_beamsearch(text, beam_size=10, ideal_token_len=10, len_reward_factor=2.3,
-                   sentence_end_reward_factor=0.9, comma_end_reward_factor=0.5, max_lookahead=40, debug_print=True):
+                   sentence_end_reward_factor=0.9, comma_end_reward_factor=0.5, max_lookahead=40, debug_print=False):
     doc = segment_nlp(text)
     doc_parsetree_seqs = []    
 
@@ -139,4 +139,3 @@ if __name__ == "__main__":
     print('segments:')
     for segment in segment_beamsearch(test):
         print(segment)
-
