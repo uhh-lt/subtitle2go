@@ -143,8 +143,8 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
     # Call teh segmentation beamsearch
     segments = segment_text.segment_beamsearch(word_string, beam_size=beam_size, ideal_token_len=ideal_token_len,
                                                len_reward_factor=len_reward_factor,
-                                            comma_end_reward_factor=comma_end_reward_factor,
-                                            sentence_end_reward_factor=sentence_end_reward_factor)
+                                               sentence_end_reward_factor=sentence_end_reward_factor,
+                                               comma_end_reward_factor=comma_end_reward_factor)
     
     temp_segments = []
     temp_segments.append(segments[0])
@@ -248,7 +248,8 @@ if __name__ == "__main__":
     vtt = add_interpunctuation(vtt, words)
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
                              len_reward_factor=args.len_reward_factor,
-                             sentence_end_reward_factor=args.sentence_end_reward_factor)
+                             sentence_end_reward_factor=args.sentence_end_reward_factor,
+                             comma_end_reward_factor=args.comma_end_reward_factor)
 
     # sequences = array_to_sequences(vtt)
     create_subtitle(sequences, subtitleFormat, filenameS)
