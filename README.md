@@ -55,7 +55,7 @@ Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
 ```
 source subtitle2go_env/bin/activate
 . path.sh
-python nnet3-recognizer.py -f "mediafile.mp4"
+python nnet3-recognizer.py mediafile.mp4
 ```
 
 The subtitle is then generated as `mediafile.vtt`
