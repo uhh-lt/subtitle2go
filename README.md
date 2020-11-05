@@ -31,8 +31,14 @@ python -m spacy download de
 # Now install PyKaldi
 wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
-git clone https://github.com/pykaldi/pykaldi
-pykaldi/tools/install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+
+# Install Kaldi and Intel MKL (see note below if you have a different CPU than Intel)
+
+./install_mkl.sh
+./install_kaldi_intel.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+
+#OR if you have a non-Intel CPU:
+#install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # Install punctuator2 for automatic punctuation
 git clone https://github.com/ottokart/punctuator2.git
