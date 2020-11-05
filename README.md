@@ -55,12 +55,62 @@ Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
 ```
 source subtitle2go_env/bin/activate
 . path.sh
-python nnet3-recognizer.py mediafile.mp4
+python subtitle2go.py mediafile.mp4
 ```
 
 The subtitle is then generated as `mediafile.vtt`
 
+The following options are available:
+
+```
+usage: subtitle2go.py [-h] [-s {vtt,srt}] [--asr-beam-size ASR_BEAM_SIZE]
+                           [--asr-max-active ASR_MAX_ACTIVE]
+                           [--segment-beam-size SEGMENT_BEAM_SIZE]
+                           [--ideal-token-len IDEAL_TOKEN_LEN]
+                           [--len-reward-factor LEN_REWARD_FACTOR]
+                           [--sentence-end-reward_factor SENTENCE_END_REWARD_FACTOR]
+                           [--comma-end-reward-factor COMMA_END_REWARD_FACTOR]
+                           filename
+
+positional arguments:
+  filename              The path of the mediafile
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -s {vtt,srt}, --subtitle {vtt,srt}
+                        The output subtitleformat (vtt or srt). Default=vtt
+  --asr-beam-size ASR_BEAM_SIZE
+                        ASR decoder option: controls the beam size in the beam
+                        search. This is a speed / accuracy tradeoff.
+  --asr-max-active ASR_MAX_ACTIVE
+                        ASR decoder option: controls the maximum number of
+                        states that can be active at one time.
+  --segment-beam-size SEGMENT_BEAM_SIZE
+                        What beam size to use for the segmentation search
+  --ideal-token-len IDEAL_TOKEN_LEN
+                        The ideal length of tokens per segment
+  --len-reward-factor LEN_REWARD_FACTOR
+                        How important it is to be close to ideal_token_len,
+                        higher factor = splits are closer to ideal_token_len
+  --sentence-end-reward_factor SENTENCE_END_REWARD_FACTOR
+                        The weight of the sentence end score in the search.
+                        Higher values make it more likely to always split at
+                        sentence end.
+  --comma-end-reward-factor COMMA_END_REWARD_FACTOR
+                        The weight of the comma end score in the search.
+                        Higher values make it more likely to always split at
+                        commas.
+```
+
 ## FAQ
+
+### Error message ImportError: libkaldi-base.so: cannot open shared object file: No such file or directory
+
+You have to load the path.sh into your shell. You need to run:
+
+. path.sh
+
+Every time you start a new shell session in order to use subtitle2go
 
 ### Error message "had nonzero return status 32512"
 The path of kaldi is missing or incorrect
