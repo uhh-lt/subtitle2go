@@ -23,10 +23,7 @@ def ensure_dir(fpath):
 
 
 # This is the main function that sets up the Kaldi decoder, loads the model and sets it up to decode the input file.
-def asr(filenameS, asr_beamsize=13, asr_max_active=8000):
-    filenameS_hash = hex(abs(hash(filenameS)))[2:]
-    ensure_dir('tmp/')
-
+def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
     models_dir = "models/"
 
     # Read yaml File
@@ -141,13 +138,18 @@ def array_to_squences(vtt):  # Alte Sequenztrennung nach 10 Wörtern
 
 
 # Adds interpunctuation to the Kaldi output
-def add_interpunctuation(vtt, words):
-    print("Starting Interpunction")
-    raw_file = open("raw_text.txt", "w")
+def interpunctuation(vtt, words, filenameS_hash):
+    raw_filename = "tmp/%s_raw.txt" % (filenameS_hash)
+    token_filename = "tmp/%s_token.txt" % (filenameS_hash)
+    readable_filename = "tmp/%s_readable.txt" % (filenameS_hash)
+    
+    print("Starting interpunctuation")
+    
+    raw_file = open(raw_filename, "w")
     raw_file.write(' '.join(words))
     raw_file.close()  # Schreibt die ASR Daten zu einer neuen Datei
-    os.system("./punctuator.sh")  # Startet Punctuator2 extern (fügt Interpunktion hinzu und macht den Text lesbar)
-    file_punct = open("punc_output_readable.txt", "r")  # liest den interpunktierten Text ein
+    os.system("./punctuator.sh %s %s %s" % (raw_filename, token_filename, readable_filename))  # Startet Punctuator2 extern (fügt Interpunktion hinzu und macht den Text lesbar)
+    file_punct = open(readable_filename, "r")  # liest den interpunktierten Text ein
     punct_list = file_punct.read().split(" ")
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den Neuen
@@ -155,6 +157,15 @@ def add_interpunctuation(vtt, words):
             vtt_punc.append([a, b[1], b[2]])
         else:
             vtt_punc.append(b)
+    
+    # Cleanup tmp files
+    print('removing tmp file:', raw_filename)
+    os.remove(raw_filename)
+    print('removing tmp file:', token_filename)
+    os.remove(token_filename)
+    print('removing tmp file:', readable_filename)
+    os.remove(readable_filename)
+
     return vtt_punc
 
 
@@ -206,6 +217,8 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
 
 # Creates the subtitle in the desired subtitleFormat and writes to filenameS (filename stripped) + subtitle suffix
 def create_subtitle(sequences, subtitleFormat, filenameS):
+    print("Creating subtitle")
+    
     if subtitleFormat == "vtt":
         file = open(filenameS + ".vtt", "w")
         file.write("WEBVTT\n\n")
@@ -276,9 +289,11 @@ if __name__ == "__main__":
     filenameS = args.filename.rpartition(".")[0]
     filename = args.filename
     subtitleFormat = args.subtitle
+    filenameS_hash = hex(abs(hash(filenameS)))[2:]
+    ensure_dir('tmp/')
 
-    vtt, words = asr(filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active)
-    vtt = add_interpunctuation(vtt, words)
+    vtt, words = asr(filenameS_hash, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active)
+    vtt = interpunctuation(vtt, words, filenameS_hash)
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
                              len_reward_factor=args.len_reward_factor,
                              sentence_end_reward_factor=args.sentence_end_reward_factor,

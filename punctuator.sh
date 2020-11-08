@@ -1,2 +1,2 @@
-cat raw_text.txt | python punctuator2/punctuator.py models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl punc_output_token.txt
-python punctuator2/convert_to_readable.py punc_output_token.txt punc_output_readable.txt
+cat $1 | python punctuator2/punctuator.py models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl $2
+python punctuator2/convert_to_readable.py $2 $3
