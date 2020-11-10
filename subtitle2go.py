@@ -91,16 +91,14 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
             out = asr.decode((feats, ivectors))
             best_path = functions.compact_lattice_shortest_path(out["lattice"])
             words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
-            # print(functions.compact_lattice_shortest_path(out["lattice"]))
             timing = functions.compact_lattice_to_word_alignment(best_path)
-            # print(fkey, " ".join(indices_to_symbols(symbols, words)), flush=True)
 
     assert(did_decode)
 
-    # Wandelt die Word Nummern um zu Wörtern
+    # Maps words to the numbers
     words = indices_to_symbols(symbols, timing[0])
 
-    # Erstellt Datenstruktur (Wort, Wortanfang(Frames), Wortende(Frames))
+    # Creates the datastructure (Word, begin(Frames), end(Frames))
     vtt = list(map(list, zip(words, timing[1], timing[2])))
 
     # Cleanup tmp files
@@ -110,7 +108,6 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
     os.remove(wav_filename)
     print('removing tmp file:', spk2utt_filename)
     os.remove(spk2utt_filename)
-
     return vtt, words
 
 
@@ -148,8 +145,8 @@ def interpunctuation(vtt, words, filenameS_hash):
     raw_file = open(raw_filename, "w")
     raw_file.write(' '.join(words))
     raw_file.close()  # Schreibt die ASR Daten zu einer neuen Datei
-    os.system("./punctuator.sh %s %s %s" % (raw_filename, token_filename, readable_filename))  # Startet Punctuator2 extern (fügt Interpunktion hinzu und macht den Text lesbar)
-    file_punct = open(readable_filename, "r")  # liest den interpunktierten Text ein
+    os.system("./punctuator.sh %s %s %s" % (raw_filename, token_filename, readable_filename))  # Starts Punctuator2 to add interpunctuation
+    file_punct = open(readable_filename, "r")
     punct_list = file_punct.read().split(" ")
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den Neuen
@@ -175,65 +172,61 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
     sequences = []
 
     word_string = ""
-    word_counter = 0
+    word_counter = -1 # array starts at zero
     print("Begin Segmentation")
-    for e in vtt:
-        if e[0] == "<UNK>":  # Die <UNK> Token werden in der Segmentierung manchmal getrennt.
-            word_string = word_string + " " + "UNK"
+    for e in vtt: # To prevent problems with the angle brackets
+        if e[0] == "<UNK>":  
+            word_string += "UNK" + " "
         else:
-            word_string = word_string + " " + e[0]
-
-    # Call teh segmentation beamsearch
+            word_string += e[0] + " "
+    word_string = word_string[:-1]
+    # Call the segmentation beamsearch
     segments = segment_text.segment_beamsearch(word_string, beam_size=beam_size, ideal_token_len=ideal_token_len,
                                                len_reward_factor=len_reward_factor,
                                                sentence_end_reward_factor=sentence_end_reward_factor,
                                                comma_end_reward_factor=comma_end_reward_factor)
-
+    
     temp_segments = []
     temp_segments.append(segments[0])
-    for current in segments[1:]:  # Korrektur falls ein Satzzeichen in die nächste Zeile gerutscht ist
+    # Corrects punctuation marks when they are slipped
+    # to the beginning of the next line
+    for current in segments[1:]:    
         if current[0] == "," or current[0] == ".":
-            temp_segments[:1][0] = temp_segments[:1][0] + current[0]
+            temp_segments[-1]+= current[0]
             current = current[2:]
         temp_segments.append(current)
     segments = temp_segments
-
+    # Cuts the segments in words, removes empty objects and
+    # and creates the sequences object
     for segment in segments:
-        # Trennt das Segment in einzelne Wörter,
-        # entfernt leere Objekte vom String und speichert eine Liste
-        cleanSegment = list(filter(None, segment.split(" ")))
-
-        stringSegment = " ".join(cleanSegment)  # Baut einen neuen String
-        seg_len = len(cleanSegment)  # Länge des aktuellen Segments
-        if word_counter != 0:  # Sonst überschneiden sich die Untertitel
-            begin_segment = vtt[word_counter + 1][1]
-        else:
-            begin_segment = vtt[word_counter][1]
-        end_segment = vtt[word_counter + seg_len][1] + vtt[word_counter + seg_len][2]
-        sequences.append([stringSegment, begin_segment, end_segment])
-        word_counter = word_counter + seg_len
+        clean_segment = list(filter(None, segment.split(" ")))
+        string_segment = " ".join(clean_segment)
+        segment_length = len(clean_segment)
+        begin_segment = vtt[word_counter + 1][1]
+        end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
+        sequences.append([string_segment, begin_segment, end_segment])
+        word_counter = word_counter + segment_length
     return sequences
 
 
 # Creates the subtitle in the desired subtitleFormat and writes to filenameS (filename stripped) + subtitle suffix
-def create_subtitle(sequences, subtitleFormat, filenameS):
+def create_subtitle(sequences, subtitle_format, filenameS):
     print("Creating subtitle")
     
-    if subtitleFormat == "vtt":
+    if subtitle_format == "vtt":
         file = open(filenameS + ".vtt", "w")
         file.write("WEBVTT\n\n")
         separator = "."
-    elif subtitleFormat == "srt":
+    elif subtitle_format == "srt":
         file = open(filenameS + ".srt", "w")
         separator = ","
 
     sequenz_counter = 1
     for a in sequences:
-        start_seconds = a[1] / 33.333  # Start der Sequenz in Sekunden
-        end_seconds = a[2] / 33.333  # Ende der Sequenz in Sekunden
-        file.write(str(sequenz_counter) + "\n")  # Nummer der aktuellen Sequenz
-        ## TODO: Direkt in die Datenstruktur sequences einpflegen
-        if start_seconds == 0:  # Erste Sequenz darf nicht bei 0 starten sonst wird sie nicht verarbeitet
+        start_seconds = a[1] / 33.333  # Start of sequence in seconds
+        end_seconds = a[2] / 33.333  # End of sequence in seconds
+        file.write(str(sequenz_counter) + "\n")  # number of actual sequence
+        if start_seconds == 0:  # If the first sequence starts at 0 the sequence is skipped TODO: The first sequenz starts mistakenly every time at 0
             time_start = "00:00:00{}001".format(separator)
         else:
             time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600),
@@ -248,7 +241,6 @@ def create_subtitle(sequences, subtitleFormat, filenameS):
         file.write(a[0] + "\n\n")
         sequenz_counter += 1
     file.close()
-
 
 if __name__ == "__main__":
     # Argument parser
@@ -286,12 +278,11 @@ if __name__ == "__main__":
     parser.add_argument("filename", help="The path of the mediafile", type=str)
 
     args = parser.parse_args()
-    filenameS = args.filename.rpartition(".")[0]
+    filenameS = args.filename.rpartition(".")[0] # Filename without file extension
     filename = args.filename
-    subtitleFormat = args.subtitle
+    subtitle_format = args.subtitle
     filenameS_hash = hex(abs(hash(filenameS)))[2:]
     ensure_dir('tmp/')
-
     vtt, words = asr(filenameS_hash, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active)
     vtt = interpunctuation(vtt, words, filenameS_hash)
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
@@ -300,4 +291,4 @@ if __name__ == "__main__":
                              comma_end_reward_factor=args.comma_end_reward_factor)
 
     # sequences = array_to_sequences(vtt)
-    create_subtitle(sequences, subtitleFormat, filenameS)
+    create_subtitle(sequences, subtitle_format, filenameS)
