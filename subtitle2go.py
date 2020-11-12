@@ -171,15 +171,12 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
                  sentence_end_reward_factor):
     sequences = []
 
-    word_string = ""
     word_counter = -1 # array starts at zero
     print("Begin Segmentation")
-    for e in vtt: # To prevent problems with the angle brackets
-        if e[0] == "<UNK>":  
-            word_string += "UNK" + " "
-        else:
-            word_string += e[0] + " "
-    word_string = word_string[:-1]
+    
+    # Makes a string for segmentation and change the <UNK> Token to UNK
+    word_string = " ".join([e[0].replace("<UNK>", "UNK") for e in vtt])
+    
     # Call the segmentation beamsearch
     segments = segment_text.segment_beamsearch(word_string, beam_size=beam_size, ideal_token_len=ideal_token_len,
                                                len_reward_factor=len_reward_factor,
