@@ -14,6 +14,7 @@ import argparse
 import ffmpeg
 import os
 import segment_text
+import slide_stripper
 
 #make sure a fpath directory exists
 def ensure_dir(fpath):
@@ -246,6 +247,9 @@ if __name__ == "__main__":
     # flag (- and --) arguments
     parser.add_argument("-s", "--subtitle", help="The output subtitleformat (vtt or srt). Default=vtt",
                         required=False, default="vtt", choices=["vtt", "srt"])
+    
+    parser.add_argument("-p", "--pdf", help="Path to the slides (PDF).",
+                        required=False)
 
     parser.add_argument("--asr-beam-size", help="ASR decoder option: controls the beam size in the beam search."
                                                 " This is a speed / accuracy tradeoff.",
@@ -278,8 +282,14 @@ if __name__ == "__main__":
     filenameS = args.filename.rpartition(".")[0] # Filename without file extension
     filename = args.filename
     subtitle_format = args.subtitle
+    pdf_path = args.pdf
+
     filenameS_hash = hex(abs(hash(filenameS)))[2:]
     ensure_dir('tmp/')
+    
+    if (pdf_path):
+        slides = slide_stripper.convert_pdf(pdf_path)
+
     vtt, words = asr(filenameS_hash, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active)
     vtt = interpunctuation(vtt, words, filenameS_hash)
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
