@@ -200,7 +200,11 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
         clean_segment = list(filter(None, segment.split(" ")))
         string_segment = " ".join(clean_segment)
         segment_length = len(clean_segment)
-        begin_segment = vtt[word_counter + 1][1]
+        # fixes problems with the first token. The first token is everytime 0.
+        if vtt[word_counter + 1][1] == 0:
+            begin_segment = vtt[word_counter + 2][1]
+        else:
+            begin_segment = vtt[word_counter + 1][1]
         end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
         sequences.append([string_segment, begin_segment, end_segment])
         word_counter = word_counter + segment_length
@@ -221,13 +225,11 @@ def create_subtitle(sequences, subtitle_format, filenameS):
 
     sequenz_counter = 1
     for a in sequences:
+
         start_seconds = a[1] / 33.333  # Start of sequence in seconds
         end_seconds = a[2] / 33.333  # End of sequence in seconds
         file.write(str(sequenz_counter) + "\n")  # number of actual sequence
-        if start_seconds == 0:  # If the first sequence starts at 0 the sequence is skipped TODO: The first sequenz starts mistakenly every time at 0
-            time_start = "00:00:00{}001".format(separator)
-        else:
-            time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600),
+        time_start = "{:0>2d}:{:0>2d}:{:0>2d}{}000".format(int(start_seconds / 3600),
                                                                int((start_seconds / 60) % 60),
                                                                int(start_seconds % 60), separator)
 
