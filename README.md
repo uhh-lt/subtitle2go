@@ -1,4 +1,12 @@
-# subtitle2go
+# Subtitle2go - Open Source Automatic Lecture Subtitling
+
+Subtitle2go is a fully automatic solution for German video subtitling, with a focus on lecture videos. The project uses open source models and scripts for German ASR, automatic punctuation reconstruction and subtitle segmentation. 
+
+The Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on 1000h of German speech data.
+
+[Punctuator2](https://github.com/ottokart/punctuator2) is used for punctuation reconstruction (,.?!)
+
+Subtitle2go uses a custom solution for segmentation, with a beam search segmentation algorithm that searches for the best "segmentation path" with user specified criteria such as average length and variance. Punctuation and distances in parsing trees are used to estimate splitting costs.
 
 ## Changelog
 
@@ -11,6 +19,9 @@
 + Python 3.7
 
 ## Installguide
+
+This installation guide installs all dependencies, scripts and downloads pre-trained models (Kaldi+punctuator2).
+
 ```
 #make sure you have Python 3.7 installed and also its dev package:
 sudo apt-get install python3.7 python3.7-dev
