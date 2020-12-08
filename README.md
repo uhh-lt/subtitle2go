@@ -8,6 +8,8 @@ The Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kald
 
 Subtitle2go uses a custom solution for segmentation, with a beam search segmentation algorithm that searches for the best "segmentation path" with user specified criteria such as average length and variance. Punctuation and distances in parsing trees are used to estimate splitting costs.
 
+![Subtitle2Go Pipeline](Pipeline.png)
+
 ## Changelog
 
 ### 24.10.2020
@@ -36,7 +38,7 @@ cd subtitle2go/
 
 virtualenv -p /usr/bin/python3.7 subtitle2go_env
 source subtitle2go_env/bin/activate
-pip install numpy pyyaml ffmpeg-python theano spacy
+pip install numpy pyyaml ffmpeg-python theano spacy pdfplumber
 python -m spacy download de
 
 # Now install PyKaldi
@@ -48,8 +50,8 @@ pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
 ./install_mkl.sh
 ./install_kaldi_intel.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
-#OR if you have a non-Intel CPU:
-#install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+# OR if you have a non-Intel CPU:
+install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # Install punctuator2 for automatic punctuation
 git clone https://github.com/ottokart/punctuator2.git

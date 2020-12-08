@@ -27,7 +27,7 @@ make -j4
 
 cd ../src
 ./configure --help
-./configure --shared --cudatk-dir=/usr/local/cuda/ --mathlib=MKL --mkl-root=/opt/intel/mkl/ --use-cuda=no --static-math=yes
+./configure --shared --static-math=yes
 make clean -j && make depend -j 16 && make -j 16
 
 echo "Done installing Kaldi."
