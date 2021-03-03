@@ -17,15 +17,21 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 + Added a better subtitle segmentation algorithm
 
 ## Requirements
-+ Ubuntu 18.04
 + Python 3.7
++ Ubuntu 18.04 or 20.04
 
 ## Installguide
 
 This installation guide installs all dependencies, scripts and downloads pre-trained models (Kaldi+punctuator2).
 
 ```
-#make sure you have Python 3.7 installed and also its dev package:
+# Ubuntu 18.04: make sure you have Python 3.7 installed and also its dev package:
+sudo apt-get update
+sudo apt-get install python3.7 python3.7-dev
+
+# Ubuntu 20.02: you need to activate the deadsnakes Python PPA, in order to install python 3.7
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
 sudo apt-get install python3.7 python3.7-dev
 
 # Now clone the subtitle2go package somwhere:
