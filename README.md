@@ -13,7 +13,7 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 ## News
 
 ### 03.03.2021
-+ We presented Subtitle2Go at [http://www.essv.de/essv2021/program/](ESSV2021). You check out our paper [here](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf).
++ We presented Subtitle2Go at [ESSV2021](http://www.essv.de/essv2021/program/). You check out our paper [here](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf).
 
 ### 24.10.2020
 + Added punctuation model (with punctuator2)
