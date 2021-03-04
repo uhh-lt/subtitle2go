@@ -1,8 +1,8 @@
 # Subtitle2go - Open Source Automatic Lecture Subtitling
 
-Subtitle2go is a fully automatic solution for German video subtitling, with a focus on lecture videos. The project uses open source models and scripts for German ASR, automatic punctuation reconstruction and subtitle segmentation. 
+Subtitle2go is a fully automatic solution for German video subtitling, with a focus on lecture videos. The project uses open source models and scripts for German ASR, automatic punctuation reconstruction and subtitle segmentation. But it should be straight-forward to support other languages as well and PRs are welcome!
 
-The Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on 1000h of German speech data.
+Our German Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on 1000h of German speech data.
 
 [Punctuator2](https://github.com/ottokart/punctuator2) is used for punctuation reconstruction (,.?!)
 
@@ -10,7 +10,10 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 
 ![Subtitle2Go Pipeline](Pipeline.png)
 
-## Changelog
+## News
+
+### 03.03.2021
++ We presented Subtitle2Go at [http://www.essv.de/essv2021/program/](ESSV2021). You check out our paper [here](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf).
 
 ### 24.10.2020
 + Added punctuation model (with punctuator2)
@@ -139,3 +142,25 @@ export KALDI_ROOT=PATH_TO_KALDI
 export PATH=$KALDI_ROOT/src/lmbin/:$KALDI_ROOT/../kaldi_lm/:$PWD/utils/:$KALDI_ROOT/src/bin:$KALDI_ROOT/tools/openfst/bin:$KALDI_ROOT/src/fstbin/:$KALDI_ROOT/src/gmmbin/:$KALDI_ROOT/src/featbin/:$KALDI_ROOT/src/lm/:$KALDI_ROOT/src/sgmmbin/:$KALDI_ROOT/src/sgmm2bin/:$KALDI_ROOT/src/fgmmbin/:$KALDI_ROOT/src/latbin/:$KALDI_ROOT/src/nnetbin:$KALDI_ROOT/src/nnet2bin/:$KALDI_ROOT/src/online2bin/:$KALDI_ROOT/src/ivectorbin/:$KALDI_ROOT/src/kwsbin:$KALDI_ROOT/src/nnet3bin:$KALDI_ROOT/src/chainbin:$KALDI_ROOT/tools/sph2pipe_v2.5/:$KALDI_ROOT/src/rnnlmbin:$PWD:$PATH
 ```
 and replace PATH_TO_KALDI with the path to your kaldi binaries (eg. pykaldi/tools/kaldi)
+
+## References
+
+If you use Subtitle2Go in your academic work, please cite:
+
+    @InProceedings{milde-etal-21-subtitle2go,
+      author="Benjamin Milde, Robert Geislinger, Irina Lindt, Timo Baumann",
+      title="Open Source Automatic Lecture Subtitling",
+      booktitle="Proceedings of ESSV 2021",
+      year="2021",
+    }
+
+and optionally:
+
+    @InProceedings{milde-koehn-18-german-asr,
+      author="Benjamin Milde and Arne K{\"o}hn ",
+      title="Open Source Automatic Speech Recognition for German",
+      booktitle="Proceedings of ITG 2018",
+      year="2018",
+    }
+
+Thanks!
