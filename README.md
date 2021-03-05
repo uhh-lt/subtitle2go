@@ -152,6 +152,7 @@ If you use Subtitle2Go in your academic work, please cite:
       title="Open Source Automatic Lecture Subtitling",
       booktitle="Proceedings of ESSV 2021",
       year="2021",
+      pages="128--134"
     }
 
 and optionally:
