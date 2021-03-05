@@ -148,20 +148,20 @@ and replace PATH_TO_KALDI with the path to your kaldi binaries (eg. pykaldi/tool
 If you use Subtitle2Go in your academic work, please cite:
 
     @InProceedings{milde-etal-21-subtitle2go,
-      author="Benjamin Milde, Robert Geislinger, Irina Lindt, Timo Baumann",
-      title="Open Source Automatic Lecture Subtitling",
-      booktitle="Proceedings of ESSV 2021",
-      year="2021",
-      pages="128--134"
+      author={Benjamin Milde, Robert Geislinger, Irina Lindt, Timo Baumann},
+      title={Open Source Automatic Lecture Subtitling},
+      booktitle={Proceedings of ESSV 2021},
+      year={2021},
+      pages={128--134}
     }
 
 and optionally:
 
     @InProceedings{milde-koehn-18-german-asr,
-      author="Benjamin Milde and Arne K{\"o}hn ",
-      title="Open Source Automatic Speech Recognition for German",
-      booktitle="Proceedings of ITG 2018",
-      year="2018",
+      author={Benjamin Milde and Arne K{\"o}hn},
+      title={Open Source Automatic Speech Recognition for German},
+      booktitle={Proceedings of ITG 2018},
+      year={2018},
     }
 
 Thanks!
