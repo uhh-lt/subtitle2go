@@ -145,7 +145,7 @@ and replace PATH_TO_KALDI with the path to your kaldi binaries (eg. pykaldi/tool
 
 ## References
 
-If you use Subtitle2Go in your academic work, please cite:
+If you use Subtitle2Go in your academic work, please cite [this paper](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf):
 
     @InProceedings{milde-etal-21-subtitle2go,
       author={Benjamin Milde and Robert Geislinger and Irina Lindt and Timo Baumann},
