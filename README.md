@@ -155,7 +155,7 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
       pages={128--134}
     }
 
-and optionally:
+and optionally for the ASR models:
 
     @InProceedings{milde-koehn-18-german-asr,
       author={Benjamin Milde and Arne K{\"o}hn},
