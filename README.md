@@ -12,6 +12,10 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 
 ## News
 
+### 01.11.2021
+
+https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its production system!
+
 ### 03.03.2021
 + We presented Subtitle2Go at [ESSV2021](http://www.essv.de/essv2021/program/). You can check out our paper [here](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf) and [here (mirror)](https://www.inf.uni-hamburg.de/en/inst/ab/lt/publications/2021-mildeetal-subtitle.pdf).
 
