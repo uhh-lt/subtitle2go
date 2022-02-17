@@ -52,7 +52,7 @@ cd subtitle2go/
 virtualenv -p /usr/bin/python3.7 subtitle2go_env
 source subtitle2go_env/bin/activate
 pip install numpy pyyaml ffmpeg-python theano spacy pdfplumber
-python -m spacy download de
+python -m spacy download de_core_news_lg
 
 # Now install PyKaldi
 wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
