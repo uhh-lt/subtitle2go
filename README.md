@@ -52,8 +52,8 @@ cd subtitle2go/
 
 virtualenv -p /usr/bin/python3.9 subtitle2go_env
 source subtitle2go_env/bin/activate
-pip install numpy pyyaml ffmpeg-python theano spacy pdfplumber
-python -m spacy download de_core_news_lg
+pip3 install numpy pyyaml ffmpeg-python theano spacy pdfplumber
+python3 -m spacy download de_core_news_lg
 
 # Now install PyKaldi
 wget https://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
@@ -82,7 +82,7 @@ Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
 ```
 source subtitle2go_env/bin/activate
 . path.sh
-python subtitle2go.py mediafile.mp4
+python3 subtitle2go.py mediafile.mp4
 ```
 
 The subtitle is then generated as `mediafile.vtt`
