@@ -32,14 +32,14 @@ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its produc
 This installation guide installs all dependencies, scripts and downloads pre-trained models (Kaldi+punctuator2).
 
 ```
-# Ubuntu 18.04: make sure you have Python 3.7 installed and also its dev package:
+# Ubuntu: make sure you have Python 3.9 installed and also its dev package:
 sudo apt-get update
-sudo apt-get install python3.7 python3.7-dev
+sudo apt-get install python3.9 python3.9-dev
 
-# Ubuntu 20.02: you need to activate the deadsnakes Python PPA, in order to install python 3.7
+# Ubuntu: if python3.9 is not available, you can activate the deadsnakes Python PPA, in order to install python 3.9 through this PPA
 sudo add-apt-repository ppa:deadsnakes/ppa
 sudo apt-get update
-sudo apt-get install python3.7 python3.7-dev
+sudo apt-get install python3.9 python3.9-dev
 
 # Now clone the subtitle2go package somwhere:
 mkdir ~/projects/
@@ -49,14 +49,14 @@ cd subtitle2go/
 
 # create virtual env and install python dependencies:
 
-virtualenv -p /usr/bin/python3.7 subtitle2go_env
+virtualenv -p /usr/bin/python3.9 subtitle2go_env
 source subtitle2go_env/bin/activate
 pip install numpy pyyaml ffmpeg-python theano spacy pdfplumber
 python -m spacy download de_core_news_lg
 
 # Now install PyKaldi
-wget http://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
-pip install pykaldi-0.1.2-cp37-cp37m-linux_x86_64.whl
+wget https://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
+pip3 install pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
 
 # Install Kaldi and Intel MKL (see note below if you have a different CPU than Intel)
 
