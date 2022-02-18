@@ -26,6 +26,7 @@ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its produc
 ## Requirements
 + Python 3.9
 + Ubuntu 20.04 (other versions may work as well)
++ X86_64 processor
 
 ## Installguide
 
