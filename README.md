@@ -24,8 +24,8 @@ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its produc
 + Added a better subtitle segmentation algorithm
 
 ## Requirements
-+ Python 3.7
-+ Ubuntu 18.04 or 20.04
++ Python 3.9
++ Ubuntu 20.04 (other versions may work as well)
 
 ## Installguide
 
