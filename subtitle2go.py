@@ -15,6 +15,17 @@ import ffmpeg
 import os
 import segment_text
 import slide_stripper
+import json
+
+try:
+    import redis
+    red = redis.StrictRedis(charset="utf-8", decode_responses=True)
+    redis_enabled = True
+except:
+    print("Redis is not available. Disabling redis option.")
+    redis_enabled = False
+
+redis_server_channel = 'subtitle2go'
 
 #make sure a fpath directory exists
 def ensure_dir(fpath):
@@ -24,7 +35,7 @@ def ensure_dir(fpath):
 
 
 # This is the main function that sets up the Kaldi decoder, loads the model and sets it up to decode the input file.
-def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
+def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=8000, with_redis=False):
     models_dir = "models/"
 
     # Read yaml File
@@ -44,6 +55,10 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
     # write scp file
     with open(spk2utt_filename, 'w') as scp_file:
         scp_file.write("%s %s\n" % (filenameS_hash, filenameS_hash))
+    
+    if with_redis: 
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                     "filename":filename, "status":"Extract audio"}))
 
     # use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
     (
@@ -53,6 +68,10 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
             .overwrite_output()
             .run()
     )
+
+    if with_redis:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"file_id":filenameS_hash,
+                                                     "filename":filename, "status":"Audio extracted"}))
 
     # Construct recognizer
     decoder_opts = LatticeFasterDecoderOptions()
@@ -81,6 +100,10 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
             ((models_dir + decoder_yaml_opts["mfcc-config"]),
              (models_dir + decoder_yaml_opts["ivector-extraction-config"]))
     )
+    
+    if with_redis:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"file_id":filenameS_hash,
+                                                     "filename":filename, "status":"ASR started"}))
 
     did_decode = False
     # Decode wav files
@@ -93,6 +116,14 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
             best_path = functions.compact_lattice_shortest_path(out["lattice"])
             words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
             timing = functions.compact_lattice_to_word_alignment(best_path)
+
+    if with_redis:
+        if did_decode:
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"ASR finished"}))
+        else:
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"ASR failed"}))
 
     assert(did_decode)
 
@@ -109,6 +140,12 @@ def asr(filenameS_hash, filenameS, asr_beamsize=13, asr_max_active=8000):
     os.remove(wav_filename)
     print('removing tmp file:', spk2utt_filename)
     os.remove(spk2utt_filename)
+
+    if with_redis:
+        if did_decode:
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"VTT finished"}))
+
     return vtt, words
 
 
@@ -136,18 +173,31 @@ def array_to_squences(vtt):  # Alte Sequenztrennung nach 10 Wörtern
 
 
 # Adds interpunctuation to the Kaldi output
-def interpunctuation(vtt, words, filenameS_hash):
+def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
     raw_filename = "tmp/%s_raw.txt" % (filenameS_hash)
     token_filename = "tmp/%s_token.txt" % (filenameS_hash)
     readable_filename = "tmp/%s_readable.txt" % (filenameS_hash)
     
     print("Starting interpunctuation")
-    
+   
+    if with_redis:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"Starting interpunctuation."}))
+ 
     raw_file = open(raw_filename, "w")
     raw_file.write(' '.join(words))
     raw_file.close()  # Schreibt die ASR Daten zu einer neuen Datei
     os.system("./punctuator.sh %s %s %s" % (raw_filename, token_filename, readable_filename))  # Starts Punctuator2 to add interpunctuation
-    file_punct = open(readable_filename, "r")
+    
+    try:
+        file_punct = open(readable_filename, "r")
+    except:
+        print('Running punctuator failed. Exiting.')
+        if with_redis:
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"Adding interpunctuation failed."}))
+        sys.exit(-2)
+
     punct_list = file_punct.read().split(" ")
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den Neuen
@@ -163,6 +213,10 @@ def interpunctuation(vtt, words, filenameS_hash):
     os.remove(token_filename)
     print('removing tmp file:', readable_filename)
     os.remove(readable_filename)
+
+    if with_redis:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"Adding interpunctuation finished."}))
 
     return vtt_punc
 
@@ -277,6 +331,10 @@ if __name__ == "__main__":
                                                           "Higher values make it more likely to always split at commas.",
                         type=float, default=0.5)
 
+    if redis_enabled:
+        parser.add_argument("--with-redis-updates", help="Update a redis instance about the current progress.",
+                        action='store_true', default=False)
+
     # positional argument, without (- and --)
     parser.add_argument("filename", help="The path of the mediafile", type=str)
 
@@ -292,12 +350,25 @@ if __name__ == "__main__":
     if (pdf_path):
         slides = slide_stripper.convert_pdf(pdf_path)
 
-    vtt, words = asr(filenameS_hash, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active)
-    vtt = interpunctuation(vtt, words, filenameS_hash)
+    vtt, words = asr(filenameS_hash, filename=filename, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active, with_redis=args.with_redis_updates)
+    vtt = interpunctuation(vtt, words, filename, filenameS_hash, with_redis=args.with_redis_updates)
+    
+    if args.with_redis_updates:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"Starting segmentation."}))
+
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
                              len_reward_factor=args.len_reward_factor,
                              sentence_end_reward_factor=args.sentence_end_reward_factor,
                              comma_end_reward_factor=args.comma_end_reward_factor)
 
+    if args.with_redis_updates:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                        "filename":filename, "status":"Segmentation finished."}))
+
     # sequences = array_to_sequences(vtt)
     create_subtitle(sequences, subtitle_format, filenameS)
+
+    if args.with_redis_updates:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "file_id":filenameS_hash,
+                                                        "filename":filename, "status":"Job finished successfully."}))
