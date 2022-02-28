@@ -77,6 +77,31 @@ Open punctuator2/models.py in a file editor, go to line 54 and replace "from . i
 # Download pretrained models:
 ./download_models.sh
 ```
+
+## Optional: redis status updates
+
+subtitle2go.py can optionally send status updates to a redis instance. You can either connect to the redis server channel "subtitle2go" directly and receive update events. Alternatively you can run event_server.py to get a HTTP API to poll the status of all past and current subtitle2go.py runs.
+
+The following packages only need to be installed if you want to use this feature. Subtitle2go.py will automatically figure out if the redis package is available and enables/disables the accordingly.
+
+```
+sudo apt-get redis-server
+```
+
+and on Mac Os X:
+
+```
+brew install redis
+```
+
+The following additional pip packages are also needed:
+
+```
+pip3 install redis flask gunicorn
+```
+
+## Subtitle2go.py usage
+
 Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
 
 ```
@@ -87,7 +112,21 @@ python3 subtitle2go.py mediafile.mp4
 
 The subtitle is then generated as `mediafile.vtt`
 
-The following options are available:
+Optional: If you want to send status updates of the processing to redis/event_server then you need to append --with-redis-updates to subtitle2go.py:
+
+```
+python3 subtitle2go.py --with-redis-updates mediafile.mp4
+```
+
+If you start the wsgi server with ./start_eventserver_wsgi.sh then you can see status updates of every subtitle2go.py run at http://127.0.0.1:7500/status 
+
+You can also clear successful and failed runs with http://127.0.0.1:7500/clear 
+
+Redis server needs to be running.
+
+# Subtitle2go.py program arguments
+
+The following arguments are available:
 
 ```
 usage: subtitle2go.py [-h] [-s {vtt,srt}] [--asr-beam-size ASR_BEAM_SIZE]
@@ -97,6 +136,7 @@ usage: subtitle2go.py [-h] [-s {vtt,srt}] [--asr-beam-size ASR_BEAM_SIZE]
                            [--len-reward-factor LEN_REWARD_FACTOR]
                            [--sentence-end-reward_factor SENTENCE_END_REWARD_FACTOR]
                            [--comma-end-reward-factor COMMA_END_REWARD_FACTOR]
+                           [--with-redis-updates]
                            filename
 
 positional arguments:
@@ -127,6 +167,8 @@ optional arguments:
                         The weight of the comma end score in the search.
                         Higher values make it more likely to always split at
                         commas.
+  --with-redis-updates  Update a redis instance about the current progress.  
+                        (This option only shows up if the redis package is available)
 ```
 
 ## FAQ
