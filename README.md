@@ -102,7 +102,6 @@ pip3 install redis flask gunicorn
 
 ## Subtitle2go.py usage
 
-```
 Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
 
 ```
