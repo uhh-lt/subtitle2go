@@ -18,6 +18,8 @@ import slide_stripper
 import json
 import time
 
+start_time = time.time()
+
 try:
     import redis
     red = redis.StrictRedis(charset="utf-8", decode_responses=True)
@@ -58,8 +60,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         scp_file.write("%s %s\n" % (filenameS_hash, filenameS_hash))
     
     if with_redis: 
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
-                                                     "filename":filename, "status":"Extract audio"}))
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                     "filename":filename, "status":"Extract audio."}))
 
     # use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
     (
@@ -71,8 +73,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     )
 
     if with_redis:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(),"file_id":filenameS_hash,
-                                                     "filename":filename, "status":"Audio extracted"}))
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                     "filename":filename, "status":"Audio extracted."}))
 
     # Construct recognizer
     decoder_opts = LatticeFasterDecoderOptions()
@@ -103,8 +105,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     )
     
     if with_redis:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(),"file_id":filenameS_hash,
-                                                     "filename":filename, "status":"ASR started"}))
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                     "filename":filename, "status":"ASR started."}))
 
     did_decode = False
     # Decode wav files
@@ -120,11 +122,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     if with_redis:
         if did_decode:
-            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
-                                                         "filename":filename, "status":"ASR finished"}))
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"ASR finished."}))
         else:
-            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
-                                                         "filename":filename, "status":"ASR failed"}))
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"ASR failed."}))
 
     assert(did_decode)
 
@@ -144,8 +146,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     if with_redis:
         if did_decode:
-            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
-                                                         "filename":filename, "status":"VTT finished"}))
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"VTT finished."}))
 
     return vtt, words
 
@@ -182,7 +184,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
     print("Starting interpunctuation")
    
     if with_redis:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                          "filename":filename, "status":"Starting interpunctuation."}))
  
     raw_file = open(raw_filename, "w")
@@ -195,7 +197,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
     except:
         print('Running punctuator failed. Exiting.')
         if with_redis:
-            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                          "filename":filename, "status":"Adding interpunctuation failed."}))
         sys.exit(-2)
 
@@ -216,7 +218,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
     os.remove(readable_filename)
 
     if with_redis:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                          "filename":filename, "status":"Adding interpunctuation finished."}))
 
     return vtt_punc
@@ -355,7 +357,7 @@ if __name__ == "__main__":
     vtt = interpunctuation(vtt, words, filename, filenameS_hash, with_redis=args.with_redis_updates)
     
     if args.with_redis_updates:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                          "filename":filename, "status":"Starting segmentation."}))
 
     sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
@@ -364,12 +366,12 @@ if __name__ == "__main__":
                              comma_end_reward_factor=args.comma_end_reward_factor)
 
     if args.with_redis_updates:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                         "filename":filename, "status":"Segmentation finished."}))
 
     # sequences = array_to_sequences(vtt)
     create_subtitle(sequences, subtitle_format, filenameS)
 
     if args.with_redis_updates:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(),"time":time.time(), "file_id":filenameS_hash,
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                         "filename":filename, "status":"Job finished successfully."}))
