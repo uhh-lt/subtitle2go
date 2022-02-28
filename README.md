@@ -76,8 +76,9 @@ Open punctuator2/models.py in a file editor, go to line 54 and replace "from . i
 
 # Download pretrained models:
 ./download_models.sh
+```
 
-# Optional: redis status updates
+## Optional: redis status updates
 
 subtitle2go.py can optionally send status updates to a redis instance. You can either connect to the redis server channel "subtitle2go" directly and receive update events. Alternatively you can run event_server.py to get a HTTP API to poll the status of all past and current subtitle2go.py runs.
 
@@ -87,7 +88,7 @@ The following packages only need to be installed if you want to use this feature
 sudo apt-get redis-server
 ```
 
-# on mac:
+and on Mac Os X:
 
 ```
 brew install redis
@@ -99,7 +100,7 @@ The following additional pip packages are also needed:
 pip3 install redis flask gunicorn
 ```
 
-# Subtitle2go.py usage
+## Subtitle2go.py usage
 
 ```
 Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
