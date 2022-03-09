@@ -26,7 +26,6 @@ touch "python/.use_default_python"
 make -j$(nproc)
 
 cd ../src
-./configure --help
 ./configure --shared --static-math=yes
 make clean -j$(nproc) && make depend -j$(nproc) && make -j$(nproc)
 
