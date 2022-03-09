@@ -23,11 +23,11 @@ touch "python/.use_default_python"
 
 ./extras/check_dependencies.sh
 
-make -j4
+make -j$(nproc)
 
 cd ../src
 ./configure --help
 ./configure --shared --static-math=yes
-make clean -j && make depend -j 16 && make -j 16
+make clean -j$(nproc) && make depend -j$(nproc) && make -j$(nproc)
 
 echo "Done installing Kaldi."
