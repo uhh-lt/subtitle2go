@@ -334,8 +334,7 @@ if __name__ == "__main__":
                                                           "Higher values make it more likely to always split at commas.",
                         type=float, default=0.5)
 
-    if redis_enabled:
-        parser.add_argument("--with-redis-updates", help="Update a redis instance about the current progress.",
+    parser.add_argument("--with-redis-updates", help="Update a redis instance about the current progress.",
                         action='store_true', default=False)
 
     # positional argument, without (- and --)
