@@ -199,7 +199,8 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
       title={Open Source Automatic Lecture Subtitling},
       booktitle={Proceedings of ESSV 2021},
       year={2021},
-      pages={128--134}
+      pages={128--134},
+      address={Virtual Berlin, Germany}
     }
 
 and optionally for the ASR models:
@@ -209,7 +210,8 @@ and optionally for the ASR models:
       title={Open Source Automatic Speech Recognition for German},
       booktitle={Proceedings of ITG 2018},
       year={2018},
-      pages={251--255}
+      pages={251--255},
+      address={Oldenburg, Germany}
     }
 
 Thanks!
