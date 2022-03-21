@@ -209,6 +209,7 @@ and optionally for the ASR models:
       title={Open Source Automatic Speech Recognition for German},
       booktitle={Proceedings of ITG 2018},
       year={2018},
+      pages={251--255}
     }
 
 Thanks!
