@@ -24,7 +24,7 @@ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its produc
 + Added a better subtitle segmentation algorithm
 
 ## Requirements
-+ Python 3.9
++ Python 3.9 (recommended), or Python 3.8/3.7
 + Ubuntu 20.04 (other versions may work as well)
 + X86_64 processor
 
@@ -199,16 +199,19 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
       title={Open Source Automatic Lecture Subtitling},
       booktitle={Proceedings of ESSV 2021},
       year={2021},
-      pages={128--134}
+      pages={128--134},
+      address={Virtual Berlin, Germany}
     }
 
-and optionally for the ASR models:
+and for the German ASR model:
 
     @InProceedings{milde-koehn-18-german-asr,
       author={Benjamin Milde and Arne K{\"o}hn},
       title={Open Source Automatic Speech Recognition for German},
       booktitle={Proceedings of ITG 2018},
       year={2018},
+      pages={251--255},
+      address={Oldenburg, Germany}
     }
 
 Thanks!
