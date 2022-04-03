@@ -38,11 +38,10 @@ def ensure_dir(fpath):
 
 
 # This is the main function that sets up the Kaldi decoder, loads the model and sets it up to decode the input file.
-def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=8000, with_redis=False):
+def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=8000, with_redis=False, config_file="models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml"):
     models_dir = "models/"
 
     # Read yaml File
-    config_file = "models/kaldi_tuda_de_nnet3_chain2.yaml"
     with open(config_file, 'r') as stream:
         model_yaml = yaml.safe_load(stream)
     decoder_yaml_opts = model_yaml['decoder']
