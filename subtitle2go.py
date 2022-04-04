@@ -40,7 +40,9 @@ def ensure_dir(fpath):
 
 
 # This is the main function that sets up the Kaldi decoder, loads the model and sets it up to decode the input file.
-def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=8000, with_redis=False, config_file="models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml"):
+def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=8000, acoustic_scale=1.0, lm_scale=0.5,
+         with_redis=False, do_rnn_rescore=False, config_file="models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml"):
+
     models_dir = "models/"
 
     # Read yaml File
@@ -83,7 +85,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     decoder_opts.beam = asr_beamsize
     decoder_opts.max_active = asr_max_active
     decodable_opts = NnetSimpleComputationOptions()
-    decodable_opts.acoustic_scale = 1.0
+    decodable_opts.acoustic_scale = acoustic_scale #1.0
     decodable_opts.frame_subsampling_factor = 3
     decodable_opts.frames_per_chunk = 150
     asr = NnetLatticeFasterRecognizer.from_files(
@@ -105,17 +107,21 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
             ((models_dir + decoder_yaml_opts["mfcc-config"]),
              (models_dir + decoder_yaml_opts["ivector-extraction-config"]))
     )
-    
 
-    do_rnn_rescore = "rnnlm" in decoder_yaml_opts
+    rnn_rescore_available = "rnnlm" in decoder_yaml_opts
     
-    if do_rnn_rescore:
+    if do_rnn_rescore and not rnn_rescore_available:
+        print("Warning, disabling RNNLM rescoring since 'rnnlm' is not in the decoder options of the .yaml config.")
+
+    if do_rnn_rescore and rnn_rescore_available:
         if with_redis:
             red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                          "filename":filename, "status":"Loading language model rescorer."}))
         rnn_lm_folder = models_dir + decoder_yaml_opts["rnnlm"] 
         arpa_G = models_dir + decoder_yaml_opts["arpa"] 
-        print("Loading RNNLM rescorer from:", rnn_lm_folder, ", with ARPA from:", arpa_G)
+        old_lm = models_dir + decoder_yaml_opts["fst"] 
+
+        print("Loading RNNLM rescorer from:", rnn_lm_folder, ", with ARPA from:", arpa_G, "FST:", old_lm)
         # Construct RNNLM rescorer
         symbols = SymbolTable.read_text(rnn_lm_folder+"/config/words.txt")
         rnnlm_opts = RnnlmComputeStateComputationOptions()
@@ -123,13 +129,13 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         rnnlm_opts.eos_index = symbols.find_index("</s>")
         rnnlm_opts.brk_index = symbols.find_index("<brk>")
         compose_opts = ComposeLatticePrunedOptions()
-        compose_opts.lattice_compose_beam = 4
+        compose_opts.lattice_compose_beam = 6
         print(f"rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|")
         print(f"{rnn_lm_folder}/final.raw")
         rescorer = LatticeRnnlmPrunedRescorer.from_files(
             arpa_G,
             f"rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|",
-            f"{rnn_lm_folder}/final.raw", acoustic_scale=1.0, max_ngram_order=4, use_const_arpa=True,
+            f"{rnn_lm_folder}/final.raw", lm_scale=lm_scale, acoustic_scale=acoustic_scale, max_ngram_order=4, use_const_arpa=True,
             opts=rnnlm_opts, compose_opts=compose_opts)
 
 
@@ -343,6 +349,11 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pdf", help="Path to the slides (PDF).",
                         required=False)
 
+    parser.add_argument("--rnn-rescore", help="Do RNNLM rescoring of the decoder output (experimental, needs more testing).",
+                        action='store_true', default=False)
+
+    parser.add_argument("--acoustic-scale", help="ASR decoder option: This is a scale on the acoustic log-probabilities, and is a universally used kludge in HMM-GMM and HMM-DNN systems to account for the correlation between frames.", type=float, default=1.0)
+
     parser.add_argument("--asr-beam-size", help="ASR decoder option: controls the beam size in the beam search."
                                                 " This is a speed / accuracy tradeoff.",
                         type=int, default=13)
@@ -385,7 +396,10 @@ if __name__ == "__main__":
     if (pdf_path):
         slides = slide_stripper.convert_pdf(pdf_path)
 
-    vtt, words = asr(filenameS_hash, filename=filename, filenameS=filenameS, asr_beamsize=args.asr_beam_size, asr_max_active=args.asr_max_active, with_redis=args.with_redis_updates)
+    vtt, words = asr(filenameS_hash, filename=filename, filenameS=filenameS, asr_beamsize=args.asr_beam_size,
+                     asr_max_active=args.asr_max_active, acoustic_scale=args.acoustic_scale, 
+                     with_redis=args.with_redis_updates, do_rnn_rescore=args.rnn_rescore)
+    
     vtt = interpunctuation(vtt, words, filename, filenameS_hash, with_redis=args.with_redis_updates)
     
     if args.with_redis_updates:
