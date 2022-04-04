@@ -106,13 +106,13 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
              (models_dir + decoder_yaml_opts["ivector-extraction-config"]))
     )
     
-    if with_redis:
-        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
-                                                     "filename":filename, "status":"Loading language model rescorer."}))
 
     do_rnn_rescore = "rnnlm" in decoder_yaml_opts
     
     if do_rnn_rescore:
+        if with_redis:
+            red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                         "filename":filename, "status":"Loading language model rescorer."}))
         rnn_lm_folder = models_dir + decoder_yaml_opts["rnnlm"] 
         arpa_G = models_dir + decoder_yaml_opts["arpa"] 
         print("Loading RNNLM rescorer from:", rnn_lm_folder, ", with ARPA from:", arpa_G)
