@@ -1,3 +1,5 @@
+#!/bin/sh
+
 cd models/
 
 #old de model (deprecated):
@@ -11,3 +13,5 @@ wget http://ltdata1.informatik.uni-hamburg.de/subtitle2go/Model_subs_norm1_filt_
 tar xvfj de_722k_nnet3chain_tdnn1f_2048_sp_bi.tar.bz2
 bunzip2 de_772k_G.carpa.bz2
 tar xvfj de_772k_rnnlm_lstm_2x.tar.bz2
+
+cd ..
