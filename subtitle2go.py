@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import print_function
 
-from kaldi.asr import NnetLatticeFasterRecognizer, LatticeLmRescorer
+from kaldi.asr import NnetLatticeFasterRecognizer, LatticeLmRescorer, LatticeRnnlmPrunedRescorer
+from kaldi.rnnlm import RnnlmComputeStateComputationOptions
 from kaldi.decoder import LatticeFasterDecoderOptions
+from kaldi.lat.functions import ComposeLatticePrunedOptions
 from kaldi.fstext import SymbolTable, shortestpath, indices_to_symbols
 from kaldi.fstext.utils import get_linear_symbol_sequence
 from kaldi.nnet3 import NnetSimpleComputationOptions
@@ -75,6 +77,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                      "filename":filename, "status":"Audio extracted."}))
 
+
     # Construct recognizer
     decoder_opts = LatticeFasterDecoderOptions()
     decoder_opts.beam = asr_beamsize
@@ -105,6 +108,33 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     
     if with_redis:
         red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
+                                                     "filename":filename, "status":"Loading language model rescorer."}))
+
+    do_rnn_rescore = "rnnlm" in decoder_yaml_opts
+    
+    if do_rnn_rescore:
+        rnn_lm_folder = models_dir + decoder_yaml_opts["rnnlm"] 
+        arpa_G = models_dir + decoder_yaml_opts["arpa"] 
+        print("Loading RNNLM rescorer from:", rnn_lm_folder, ", with ARPA from:", arpa_G)
+        # Construct RNNLM rescorer
+        symbols = SymbolTable.read_text(rnn_lm_folder+"/config/words.txt")
+        rnnlm_opts = RnnlmComputeStateComputationOptions()
+        rnnlm_opts.bos_index = symbols.find_index("<s>")
+        rnnlm_opts.eos_index = symbols.find_index("</s>")
+        rnnlm_opts.brk_index = symbols.find_index("<brk>")
+        compose_opts = ComposeLatticePrunedOptions()
+        compose_opts.lattice_compose_beam = 4
+        print(f"rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|")
+        print(f"{rnn_lm_folder}/final.raw")
+        rescorer = LatticeRnnlmPrunedRescorer.from_files(
+            arpa_G,
+            f"rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|",
+            f"{rnn_lm_folder}/final.raw", acoustic_scale=1.0, max_ngram_order=4, use_const_arpa=True,
+            opts=rnnlm_opts, compose_opts=compose_opts)
+
+
+    if with_redis:
+        red.publish(redis_server_channel, json.dumps({"pid":os.getpid(), "time":time.time(), "start_time":start_time, "file_id":filenameS_hash,
                                                      "filename":filename, "status":"ASR started."}))
 
     did_decode = False
@@ -115,7 +145,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
             did_decode = True
             assert (fkey == ikey)
             out = asr.decode((feats, ivectors))
-            best_path = functions.compact_lattice_shortest_path(out["lattice"])
+            if do_rnn_rescore:
+                lat = rescorer.rescore(out["lattice"])
+            else:
+                lat = out["lattice"]
+            best_path = functions.compact_lattice_shortest_path(lat)
             words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
             timing = functions.compact_lattice_to_word_alignment(best_path)
 
