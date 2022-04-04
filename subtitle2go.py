@@ -84,6 +84,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     decoder_opts = LatticeFasterDecoderOptions()
     decoder_opts.beam = asr_beamsize
     decoder_opts.max_active = asr_max_active
+    
+    # Increase determinzation memory
+    # for long files we would otherwise get errors like this: 
+    # "Did not reach requested beam in determinize-lattice: size exceeds maximum 50000000 bytes"
+    decoder_opts.det_opts.max_mem = 2000000000 #2gb
     decodable_opts = NnetSimpleComputationOptions()
     decodable_opts.acoustic_scale = acoustic_scale #1.0
     decodable_opts.frame_subsampling_factor = 3
@@ -360,7 +365,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--asr-max-active", help="ASR decoder option: controls the maximum number of states that "
                                                  "can be active at one time.",
-                        type=int, default=8000)
+                        type=int, default=16000)
 
     parser.add_argument("--segment-beam-size", help="What beam size to use for the segmentation search",
                         type=int, default=10)
