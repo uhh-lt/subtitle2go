@@ -9,6 +9,8 @@ decoder:
     model : de_722k_nnet3chain_tdnn1f_2048_sp_bi/final.mdl
     word-syms : de_722k_nnet3chain_tdnn1f_2048_sp_bi/words.txt
     fst : de_722k_nnet3chain_tdnn1f_2048_sp_bi/HCLG.fst
+    arpa : de_772k_G.carpa
+    rnnlm : de_772k_rnnlm_lstm_2x/
     #    feature-type : "mfcc"
     mfcc-config : de_722k_nnet3chain_tdnn1f_2048_sp_bi/conf/mfcc_hires.conf
     frame-subsampling-factor: 3
