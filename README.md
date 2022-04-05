@@ -65,7 +65,7 @@ pip3 install pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
 ./install_kaldi_intel.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # OR if you have a non-Intel CPU:
-install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+./install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # Install punctuator2 for automatic punctuation
 git clone https://github.com/ottokart/punctuator2.git
