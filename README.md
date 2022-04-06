@@ -33,9 +33,9 @@ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its produc
 This installation guide installs all dependencies, scripts and downloads pre-trained models (Kaldi+punctuator2).
 
 ```
-# Ubuntu: make sure you have Python 3.9 installed and also its dev package:
+# Ubuntu: make sure you have Python 3.9, its dev package and ffmpeg installed:
 sudo apt-get update
-sudo apt-get install python3.9 python3.9-dev
+sudo apt-get install python3.9 python3.9-dev ffmpeg
 
 # Ubuntu: if python3.9 is not available, you can activate the deadsnakes Python PPA, in order to install python 3.9 through this PPA
 sudo add-apt-repository ppa:deadsnakes/ppa
@@ -65,7 +65,7 @@ pip3 install pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
 ./install_kaldi_intel.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # OR if you have a non-Intel CPU:
-install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
+./install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
 # Install punctuator2 for automatic punctuation
 git clone https://github.com/ottokart/punctuator2.git
