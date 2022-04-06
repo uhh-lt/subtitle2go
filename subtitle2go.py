@@ -86,9 +86,9 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     decoder_opts.max_active = asr_max_active
     
     # Increase determinzation memory
-    # for long files we would otherwise get errors like this: 
+    # for long files we would otherwise get warnings like this: 
     # "Did not reach requested beam in determinize-lattice: size exceeds maximum 50000000 bytes"
-    decoder_opts.det_opts.max_mem = 2000000000 #2gb
+    decoder_opts.det_opts.max_mem = 2100000000 #2.1gb
     decodable_opts = NnetSimpleComputationOptions()
     decodable_opts.acoustic_scale = acoustic_scale #1.0
     decodable_opts.frame_subsampling_factor = 3
@@ -354,10 +354,15 @@ if __name__ == "__main__":
     parser.add_argument("-p", "--pdf", help="Path to the slides (PDF).",
                         required=False)
 
+    parser.add_argument("-m", "--model-yaml", help="Kaldi model used for decoding (yaml config).",
+                                     type=str, default="models/kaldi_tuda_de_nnet3_chain2_de_683k.yaml")
+
     parser.add_argument("--rnn-rescore", help="Do RNNLM rescoring of the decoder output (experimental, needs more testing).",
                         action='store_true', default=False)
 
-    parser.add_argument("--acoustic-scale", help="ASR decoder option: This is a scale on the acoustic log-probabilities, and is a universally used kludge in HMM-GMM and HMM-DNN systems to account for the correlation between frames.", type=float, default=1.0)
+    parser.add_argument("--acoustic-scale", help="ASR decoder option: This is a scale on the acoustic log-probabilities,"
+                         "and is a universally used kludge in HMM-GMM and HMM-DNN systems to account for the correlation between frames.",
+                         type=float, default=1.0)
 
     parser.add_argument("--asr-beam-size", help="ASR decoder option: controls the beam size in the beam search."
                                                 " This is a speed / accuracy tradeoff.",
@@ -403,7 +408,8 @@ if __name__ == "__main__":
 
     vtt, words = asr(filenameS_hash, filename=filename, filenameS=filenameS, asr_beamsize=args.asr_beam_size,
                      asr_max_active=args.asr_max_active, acoustic_scale=args.acoustic_scale, 
-                     with_redis=args.with_redis_updates, do_rnn_rescore=args.rnn_rescore)
+                     with_redis=args.with_redis_updates, do_rnn_rescore=args.rnn_rescore,
+                     config_file=args.model_yaml)
     
     vtt = interpunctuation(vtt, words, filename, filenameS_hash, with_redis=args.with_redis_updates)
     
