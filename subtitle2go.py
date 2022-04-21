@@ -209,7 +209,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     return vtt, words
 
-def array_to_squences(vtt):  # Alte Sequenztrennung nach 10 Wörtern
+# baseline sequence splitting every 10 words
+def array_to_squences(vtt):
     len_array = math.ceil(len(vtt) / 10)
     sequences = [['' for x in range(3)] for y in range(len_array)]
     wcounter = 0
@@ -306,10 +307,11 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
     # to the beginning of the next line
     for current in segments[1:]:    
         if current[0] == ',' or current[0] == '.':
-            temp_segments[-1]+= current[0]
+            temp_segments[-1] += current[0]
             current = current[2:]
         temp_segments.append(current)
     segments = temp_segments
+
     # Cuts the segments in words, removes empty objects and
     # and creates the sequences object
     for segment in segments:
