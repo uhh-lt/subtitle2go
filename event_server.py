@@ -22,7 +22,7 @@ import redis
 import json
 
 from werkzeug.serving import WSGIRequestHandler
-from flask import jsonify,json,Response
+from flask import jsonify, json, Response
 
 __author__ = 'Benjamin Milde'
 
