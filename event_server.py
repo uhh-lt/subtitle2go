@@ -29,7 +29,7 @@ __author__ = 'Benjamin Milde'
 redis_server_channel = 'subtitle2go'
 
 app = flask.Flask(__name__)
-red = redis.StrictRedis(charset="utf-8", decode_responses=True)
+red = redis.StrictRedis(charset='utf-8', decode_responses=True)
 
 long_poll_timeout = 0.5
 long_poll_timeout_burst = 0.08
@@ -52,7 +52,7 @@ def persistence_event_stream():
 def event_stream():
     print('New connection to event_stream!')
     pubsub = red.pubsub()
-    pubsub.subscribe(reids_server_channel)
+    pubsub.subscribe(redis_server_channel)
  #   yield b'hello'
     for message in pubsub.listen():
         if not message['type'] == 'subscribe':
@@ -69,7 +69,7 @@ def status(jobid):
     if jobid in current_jobs:
         return jsonify(current_jobs[jobid])
     else:
-        return jsonify({"error":"could not find jobid in current jobs."})
+        return jsonify({'error': 'could not find jobid in current jobs.'})
 
 @app.route('/clear')
 def clear_finished():
