@@ -50,6 +50,13 @@ def event_stream():
 def status():
     return jsonify(current_jobs)
 
+@app.route('/status/<jobid>')
+def status(jobid):
+    if jobid in current_jobs:
+        return jsonify(current_jobs[jobid])
+    else:
+        return jsonify({"error":"could not find jobid in current jobs."})
+
 @app.route('/clear')
 def clear_finished():
     to_delete = []
