@@ -65,7 +65,7 @@ def status():
     return jsonify(current_jobs)
 
 @app.route('/status/<jobid>')
-def status(jobid):
+def status_with_id(jobid):
     if jobid in current_jobs:
         return jsonify(current_jobs[jobid])
     else:
