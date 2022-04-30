@@ -53,8 +53,8 @@ def process_wav(wav_filename, debug=False):
     cont_search = True
 
     max_lookahead = 100*180  # 180 seconds
-    beam_size = 20
-    len_reward_factor = 20. / float(ideal_segment_len)
+    beam_size = 10
+    len_reward_factor = 30. / float(ideal_segment_len)
     min_len = 100*5 #5 seconds
     step=1
 
@@ -70,10 +70,10 @@ def process_wav(wav_filename, debug=False):
             seq_pos, current_score = sequences[i]
             last_cut = (seq_pos[-1] if (len(seq_pos) > 0) else 0)
             score_at_k = sequences[-1][1]
-            # search over all tokens, 1 to max_lookahead
+            # search over all tokens, min_len to max_lookahead
             for j in range(min_len, min(max_lookahead, fbank_feat_len - last_cut - 1), step):
                 len_reward = len_reward_factor * (ideal_segment_len - math.fabs(ideal_segment_len - float(j)))
-                fbank_score = fbank_feat_power_smoothed[j]
+                fbank_score = fbank_feat_power_smoothed[last_cut+j]
                 new_score = current_score + len_reward + fbank_score
                 if new_score > current_score:
                     print("fbank_score:", fbank_score, "len reward:", len_reward)
