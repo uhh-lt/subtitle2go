@@ -261,7 +261,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, wi
 
     punct_list = file_punct.read().split(' ')
     vtt_punc = []
-    for a, b in zip(punct_list, vtt):  # Ersetzt die veränderten Wörter (Großschreibung, Punkt, Komma) mit den Neuen
+    for a, b in zip(punct_list, vtt):  # Replaces the adapted words with the (capitalization, period, comma) with the new ones
         if a != b[0]:
             vtt_punc.append([a, b[1], b[2]])
         else:
