@@ -24,7 +24,10 @@ import math
 from python_speech_features import logfbank
 from scipy.ndimage.filters import gaussian_filter1d
 
-def process_wav(wav_filename, debug=False):
+
+# All timing are in frames, where one frame is 0.01 seconds.
+def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
+                max_lookahead=100*180, min_len=100*5, step=1, debug=False):
 
     samplerate, data = wavfile.read(wav_filename, mmap=False)
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
@@ -42,8 +45,6 @@ def process_wav(wav_filename, debug=False):
     if debug:
         print('min:', fbank_feat_min_power, 'max:', fbank_feat_max_power)
 
-    ideal_segment_len = 100*60
-
     if debug:
         plt.imshow(fbank_feat[:1000].T, interpolation=None, aspect='auto', origin='lower')
         plt.show()
@@ -52,14 +53,12 @@ def process_wav(wav_filename, debug=False):
 
     cont_search = True
 
-    max_lookahead = 100*180  # 180 seconds
-    beam_size = 10
     len_reward_factor = 30. / float(ideal_segment_len)
-    min_len = 100*5 #5 seconds
-    step=1
 
-    # sequences are of this shape; first list keeps track of the split positions, seconds lists contains the spans
-    # the float value is the combined score for the complete path
+    # Simple Beam search to find good cuts, where the eneregy is low and where its
+    # still close to the ideal segment length.
+    # sequences are of this shape; first list keeps track of the split positions,
+    # the float value is the combined score for the complete path.
     sequences = [[[0], 0.0]]
 
     while cont_search:
@@ -76,13 +75,12 @@ def process_wav(wav_filename, debug=False):
                 fbank_score = fbank_feat_power_smoothed[last_cut+j]
                 new_score = current_score + len_reward + fbank_score
                 if new_score > current_score:
-                    print("fbank_score:", fbank_score, "len reward:", len_reward)
+                    #print("fbank_score:", fbank_score, "len reward:", len_reward)
                     candidate = [seq_pos + [last_cut + j + 1], new_score]
                     all_candidates.append(candidate)
 
-                # only continue the search, of atleast one of the candidates was better than the current score at k
+                # only continue the search, of at least one of the candidates was better than the current score at k
                 if new_score > score_at_k:
-                    #print(sequences)
                     cont_search = True
 
         # order all candidates by score
@@ -98,7 +96,7 @@ def process_wav(wav_filename, debug=False):
     print('segments:', segments)
 
     if debug:
-        for i,segment in enumerate(segments):
+        for i, segment in enumerate(segments):
             print(segment)
             out_filename = "segments/%d.wav"%i
             print('Writing to:', out_filename)
@@ -106,6 +104,7 @@ def process_wav(wav_filename, debug=False):
             wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
 
     return segments
+
 
 if __name__ == '__main__':
     # Argument parser
