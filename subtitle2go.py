@@ -72,17 +72,17 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         model_yaml = yaml.safe_load(stream)
     decoder_yaml_opts = model_yaml['decoder']
 
-    scp_filename = 'tmp/%s.scp' % filenameS_hash
-    wav_filename = 'tmp/%s.wav' % filenameS_hash
-    spk2utt_filename = 'tmp/%s_spk2utt' % filenameS_hash
+    scp_filename = f'tmp/{filenameS_hash}.scp'
+    wav_filename = f'tmp/{filenameS_hash}.wav'
+    spk2utt_filename = f'tmp/{filenameS_hash}_spk2utt'
 
     # write scp file
     with open(scp_filename, 'w') as scp_file:
-        scp_file.write('%s tmp/%s.wav\n' % (filenameS_hash, filenameS_hash))
+        scp_file.write(f'{filenameS_hash} tmp/{filenameS_hash}.wav\n')
 
     # write scp file
     with open(spk2utt_filename, 'w') as scp_file:
-        scp_file.write('%s %s\n' % (filenameS_hash, filenameS_hash))
+        scp_file.write(f'{filenameS_hash} {filenameS_hash}\n')
     
     if with_redis:
         publish_status(filename, filenameS_hash, 'Extract audio.')
@@ -91,7 +91,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     (
         ffmpeg
             .input(filename)
-            .output('tmp/%s.wav' % filenameS_hash, acodec='pcm_s16le', ac=1, ar='16k')
+            .output(f'tmp/{filenameS_hash}.wav', acodec='pcm_s16le', ac=1, ar='16k')
             .overwrite_output()
             .run()
     )
@@ -124,14 +124,12 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     phi_label = symbols.find_index('#0')
 
     # Define feature pipelines as Kaldi rspecifiers
-    feats_rspec = ('ark:compute-mfcc-feats --config=%s scp:' + scp_filename + ' ark:- |') % \
-                  (models_dir + decoder_yaml_opts['mfcc-config'])
+    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir + decoder_yaml_opts["mfcc-config"]} scp:' + scp_filename + ' ark:- |')
     ivectors_rspec = (
-            ('ark:compute-mfcc-feats --config=%s scp:' + scp_filename + ' ark:-'
-             + ' | ivector-extract-online2 --config=%s ark:' + spk2utt_filename + ' ark:- ark:- |') %
-            ((models_dir + decoder_yaml_opts['mfcc-config']),
-             (models_dir + decoder_yaml_opts['ivector-extraction-config']))
-    )
+            (f'ark:compute-mfcc-feats --config={models_dir + decoder_yaml_opts["mfcc-config"]} '
+            f'scp:{scp_filename} ark:- | '
+            f'ivector-extract-online2 --config={models_dir + decoder_yaml_opts["ivector-extraction-config"]} '
+            f'ark:{spk2utt_filename} ark:- ark:- |'))
 
     rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
     
@@ -145,7 +143,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         arpa_G = models_dir + decoder_yaml_opts['arpa'] 
         old_lm = models_dir + decoder_yaml_opts['fst'] 
 
-        print('Loading RNNLM rescorer from:', rnn_lm_folder, ', with ARPA from:', arpa_G, 'FST:', old_lm)
+        print(f'Loading RNNLM rescorer from:{rnn_lm_folder} with ARPA from:{arpa_G} FST:{old_lm}')
         # Construct RNNLM rescorer
         symbols = SymbolTable.read_text(rnn_lm_folder+'/config/words.txt')
         rnnlm_opts = RnnlmComputeStateComputationOptions()
@@ -196,11 +194,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     vtt = list(map(list, zip(words, timing[1], timing[2])))
 
     # Cleanup tmp files
-    print('removing tmp file:', scp_filename)
+    print(f'removing tmp file:{scp_filename}')
     os.remove(scp_filename)
-    print('removing tmp file:', wav_filename)
+    print(f'removing tmp file:{wav_filename}')
     os.remove(wav_filename)
-    print('removing tmp file:', spk2utt_filename)
+    print(f'removing tmp file:{spk2utt_filename}')
     os.remove(spk2utt_filename)
 
     if with_redis:
@@ -217,13 +215,13 @@ def array_to_squences(vtt):
     scounter = 0
     for a in vtt:
         if wcounter < 10:
-            if wcounter == 0:  # erstes Wort in der Sequenz
-                sequences[scounter][1] = a[1]  # Setzt Anfangstiming der Sequenz
+            if wcounter == 0:  # first word of sequence
+                sequences[scounter][1] = a[1]  # Starttiming of the sequence
                 sequences[scounter][0] = a[0]
             else:
                 sequences[scounter][0] = sequences[scounter][0] + ' ' + a[0]
             wcounter += 1
-            sequences[scounter][2] = a[1] + a[2]  # Setzt Endtiming der Sequenz
+            sequences[scounter][2] = a[1] + a[2]  # Endtiming of sequence
         else:
             wcounter = 1
             scounter += 1
@@ -270,11 +268,11 @@ def interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, wi
             vtt_punc.append(b)
     
     # Cleanup tmp files
-    print('removing tmp file:', raw_filename)
+    print(f'removing tmp file:{raw_filename}')
     os.remove(raw_filename)
-    print('removing tmp file:', token_filename)
+    print(f'removing tmp file:{token_filename}')
     os.remove(token_filename)
-    print('removing tmp file:', readable_filename)
+    print(f'removing tmp file:{readable_filename}')
     os.remove(readable_filename)
 
     if with_redis:
