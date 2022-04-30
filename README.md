@@ -54,6 +54,7 @@ virtualenv -p /usr/bin/python3.9 subtitle2go_env
 source subtitle2go_env/bin/activate
 pip3 install numpy pyyaml ffmpeg-python theano spacy pdfplumber
 python3 -m spacy download de_core_news_lg
+python3 -m spacy download en_core_web_lg
 
 # Now install PyKaldi
 wget https://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl

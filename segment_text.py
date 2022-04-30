@@ -22,8 +22,6 @@ test = '''Seit der Industriellen Revolution verstärkt der Mensch den natürlich
 
 test = '''In Husum Zeiten muss man ja immer pünktlich sein, was sonst akademischen werden. Nicht so richtig eher. Der Fall war das fing Fangnetz aber schon mal an. Ich freue mich sehr, dass wir so früh morgens am jetzt hier zusammenkommen. Einmal eben auf dem Campus von Melle Park. Und einmal in der Summe Welt. Also auf dem Server der Unität Hamburg-Mitte, das Jahr stattfinden Herzlich. Willkommen zu dieser Veranstaltung mit dem Titel Schulden Phobie und Lohnverzicht, wie man die Corona Krise zur Katastrophe macht. Mit er Professor Doktor Heiner Flassbeck er diese Veranstaltung findet, starb waren. Die meisten Menschen wissen, dass heute mal kurz er im Rahmen des ersten Semesters des Fachbereich Sozialökonomie. Das hat mal begonnen. Diese Idee eigentlich mit dem GzwanzigGipfel. Als hier in Steindorf entfernen, Messehallen sich die großen Welt Köpfe. Getroffen, haben wir gesagt da Moment mal, da haben wir noch einiges mehr mitzureden als Universität. Wollen uns mal diese Semester mit diesen Fragen auseinandersetzen und wollen ja, dass es im schüttel mich vor allem darauf ankommen könnte, Pons runter zu reißen. Oder für Lehrende. Dass man vor allem der pro Tag machen muss oder so. Sondern dass man sich mit den gesellschaftlich relevanten Fragen im im Studium beschäftigt. Dass es nicht so trocken schwimmen ist, sondern auch etwas für drittes relevantes gemeinsam machte, hatten dann auch schon zehn Semester zu Austritten aus Solidarität, Einzug, Gesundheitspflege und Kinderarbeit. Und haben jetzt eben uns in diesem mal überlegt, dass wir die gesellschaftliche Polarisierung sozialökonomische betrachten wollen. Also politisch, ökonomisch, kulturell, sozial, ökonomisch eben. Und haben uns dann aus aktuellem Anlass gesagt, dass man das auch in Zeiten von Corona eben zuspitzen muss, dass das jetzt sehr ansteht. Das Hochschulen sich da einmischen auch gegen diese ganze Erzählung, von dass eine Naturkatastrophe, was er die Hamburgische Bürgerschaft, die Masche beschlossen hat, um dann die Schuldenbremse Ausnahmeregelung anwenden zu können, um deutlich zu machen, dass das eine Gesellschaft Krise erheben is, wo wir eben auch dann handlungsfähig sind und uns das Jahr zu beschäftigen haben. Online Vorlesungen gemacht. Und sind jetzt eben diese Aktionswoche mittlerweile im finalen Tag am Freitag angekommen. Nachdem wir schon Hm, rechtswissenschaftliche, Medien, Soziologische, antirassistische sozialstaatliche, unser weite Diskussionen geführt haben, dann genau Sind wir jetzt eben er dabei und freuen uns sehr, dass wir das am ökonomisch diskutieren kann. Heterodoxe Ökonomie diskutieren können. Hm Genau mit eben Heiner Flassbeck, der beim Professor A an der ihm einen huschen Wirtschaftspolitik heutigen Fachbereich Sozialökonomie Immunität Hamburg is. Denn er war früher Stadtsekretär Bundesministerium. Der Finanzen sozusagen, hat dann langfristig rechtzeitig den Absprung gemacht, vor die neoliberale Phase dann eingeläutet is also sozusagen. Die Geschichte hat ihn daraufhin Fall recht gegeben. Was den offenen Krise und so alles folgte. Er war dann im Anschluss Chefökonom. Ähm, der UNO Organisationen für Welthandel und Entwicklungen unkt hat beim Hohen. Genau ist er seit zwei Tausend. Neunzehn Herausgeber er unter anderem dem fielen der Tätigkeiten, der Online-Zeitschrift makroskopisch Hm Genau Und. Ja, Mach schon länger im Lehrveranstaltungen. Vor allem in Master. Komische soziologische Studien. Aber Wirtschaftsgesellschaft ich auch ein bisschen Werbung machen will an dieser Stelle. Die Bewerbungsfrist läuft gerade. Also traut euch Ärmel. Genau. Und insofern freue ich mich jetzt, dass wir diese diese Diskussion Schuldenfalle Lohnverzicht, wie man die Corona Krise zu Katastrophe macht. Und vielleicht Alternativ oder so. Dann noch Gemeinde des gesunden. Ja auch normal. Dann besprechen wir das. Sind sie gemeinsam angehen kann ich wird jetzt auch gleich meine Klappe halten. Nur kurzer Hinweis auf Organisatorisches. Wenn ihr dann gleich nach dem Vortrag etwas sagen Wolfs in der Sagenwelt, dann wär 's cool, wenn ihr ein Ausrufezeichen in den Depots sind an sich, dass hier vor Ort und würdigsten sanken, die Rednerliste einsortieren. Und ich guck mich einfach hier bis in um auf informeller Park. Wer sich hier meldet. Und genau wurde das dann eben gemeinsam ein redete.'''
 
-segment_nlp = spacy.load('de_core_news_lg')
-
 # find parent in spacy dependency graph
 def find_node(common_parent, search_node):
     path_len = 0
@@ -46,9 +44,9 @@ def find_node(common_parent, search_node):
 # max_lookahead: maximum lookahead for the beam search, this is also the maximum length of one segment
 # debug_print: print additional debug info
 
-# Todo: allow other languages than German
-def segment_beamsearch(text, beam_size=10, ideal_token_len=10, len_reward_factor=2.3,
+def segment_beamsearch(text, model_spacy, beam_size=10, ideal_token_len=10, len_reward_factor=2.3,
                    sentence_end_reward_factor=0.9, comma_end_reward_factor=0.5, max_lookahead=40, debug_print=False):
+    segment_nlp = spacy.load(model_spacy)
     doc = segment_nlp(text)
     doc_parsetree_seqs = []    
 
@@ -149,10 +147,11 @@ def segment_beamsearch(text, beam_size=10, ideal_token_len=10, len_reward_factor
     return [sp.text for sp in best[1]]
 
 if __name__ == "__main__":
+    segment_nlp = spacy.load('de_core_news_lg')
     print('test input')
     print(test)
 
     print()
     print('segments:')
-    for segment in segment_beamsearch(test):
+    for segment in segment_beamsearch(test, segment_nlp):
         print(segment)

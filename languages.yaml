@@ -1,0 +1,8 @@
+de:
+  kaldi: models/kaldi_tuda_de_nnet3_chain2_de_683k.yaml
+  punctuation: models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl
+  spacy: de_core_news_lg
+en:
+  model:
+  punctuation: 
+  spacy: en_core_web_lg

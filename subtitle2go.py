@@ -234,10 +234,10 @@ def array_to_squences(vtt):
 
 
 # Adds interpunctuation to the Kaldi output
-def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
-    raw_filename = 'tmp/%s_raw.txt' % (filenameS_hash)
-    token_filename = 'tmp/%s_token.txt' % (filenameS_hash)
-    readable_filename = 'tmp/%s_readable.txt' % (filenameS_hash)
+def interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, with_redis=False):
+    raw_filename = f'tmp/{filenameS_hash}_raw.txt'
+    token_filename = f'tmp/{filenameS_hash}_token.txt'
+    readable_filename = f'tmp/{filenameS_hash}_readable.txt'
     
     print('Starting interpunctuation')
    
@@ -250,7 +250,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
     raw_file.close()
 
     # Starts Punctuator2 to add interpunctuation
-    os.system('./punctuator.sh %s %s %s' % (raw_filename, token_filename, readable_filename))
+    os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
     
     try:
         file_punct = open(readable_filename, 'r')
@@ -284,7 +284,7 @@ def interpunctuation(vtt, words, filename, filenameS_hash, with_redis=False):
 
 
 # This creates a segmentation for the subtitles and make sure it can still be mapped to the Kaldi tokenisation
-def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_reward_factor,
+def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor, comma_end_reward_factor,
                  sentence_end_reward_factor):
     sequences = []
 
@@ -296,7 +296,7 @@ def segmentation(vtt, beam_size, ideal_token_len, len_reward_factor, comma_end_r
     word_string = ' '.join([e[0].replace('<UNK>', 'UNK') for e in vtt])
     
     # Call the segmentation beamsearch
-    segments = segment_text.segment_beamsearch(word_string, beam_size=beam_size, ideal_token_len=ideal_token_len,
+    segments = segment_text.segment_beamsearch(word_string, model_spacy, beam_size=beam_size, ideal_token_len=ideal_token_len,
                                                len_reward_factor=len_reward_factor,
                                                sentence_end_reward_factor=sentence_end_reward_factor,
                                                comma_end_reward_factor=comma_end_reward_factor)
@@ -368,6 +368,8 @@ if __name__ == '__main__':
     # flag (- and --) arguments
     parser.add_argument('-s', '--subtitle', help='The output subtitleformat (vtt or srt). Default=vtt',
                         required=False, default='vtt', choices=['vtt', 'srt'])
+
+    parser.add_argument('-l', '--language', help='Set the language of the models', required=False, default='de')
     
     parser.add_argument('-p', '--pdf', help='Path to the slides (PDF).',
                         required=False)
@@ -421,6 +423,21 @@ if __name__ == '__main__':
     filename = args.filename
     subtitle_format = args.subtitle
     pdf_path = args.pdf
+    model_kaldi = args.model_yaml
+
+    # language
+    language = args.language
+    with open('languages.yaml', 'r') as stream:
+        language_yaml = yaml.safe_load(stream)
+        print(language_yaml)
+        if language_yaml.get(language, None):
+            model_kaldi = language_yaml[language]['kaldi']
+            model_punctuation = language_yaml[language]['punctuation']
+            model_spacy = language_yaml[language]['spacy']
+
+        else:
+            print(f'language {language} is not set in languages.yaml . exiting.')
+            sys.exit()
 
     filenameS_hash = hex(abs(hash(filenameS)))[2:]
     ensure_dir('tmp/')
@@ -431,14 +448,14 @@ if __name__ == '__main__':
     vtt, words = asr(filenameS_hash, filename=filename, filenameS=filenameS, asr_beamsize=args.asr_beam_size,
                      asr_max_active=args.asr_max_active, acoustic_scale=args.acoustic_scale, 
                      with_redis=args.with_redis_updates, do_rnn_rescore=args.rnn_rescore,
-                     config_file=args.model_yaml)
+                     config_file=model_kaldi)
     
-    vtt = interpunctuation(vtt, words, filename, filenameS_hash, with_redis=args.with_redis_updates)
+    vtt = interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, with_redis=args.with_redis_updates)
     
     if args.with_redis_updates:
         publish_status(filename, filenameS_hash, 'Starting segmentation.')
 
-    sequences = segmentation(vtt, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
+    sequences = segmentation(vtt, model_spacy, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
                              len_reward_factor=args.len_reward_factor,
                              sentence_end_reward_factor=args.sentence_end_reward_factor,
                              comma_end_reward_factor=args.comma_end_reward_factor)
