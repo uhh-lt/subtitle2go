@@ -52,7 +52,7 @@ cd subtitle2go/
 
 virtualenv -p /usr/bin/python3.9 subtitle2go_env
 source subtitle2go_env/bin/activate
-pip3 install numpy pyyaml ffmpeg-python theano spacy pdfplumber
+pip3 install numpy pyyaml ffmpeg-python theano spacy pdfplumber python_speech_features scipy
 python3 -m spacy download de_core_news_lg
 python3 -m spacy download en_core_web_lg
 
