@@ -60,6 +60,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
     # sequences are of this shape; first list keeps track of the split positions,
     # the float value is the combined score for the complete path.
     sequences = [[[0], 0.0]]
+    sequences_ordered = [[]]
 
     while cont_search:
         all_candidates = sequences
@@ -86,12 +87,16 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
         # order all candidates by score
         ordered = sorted(all_candidates, key=lambda tup: tup[1], reverse=True)
         # select k best
-        sequences = ordered[:beam_size]
+        sequences_ordered = ordered[:beam_size]
 
-    print(sequences)
+    print(sequences_ordered)
 
-    best_cuts = sequences[0]
-    segments = list(zip(best_cuts[0][:-1], best_cuts[0][1:]))
+    # this can happen with very short input wavs
+    if len(sequences_ordered[0]) <= 1:
+        segments = [(0, fbank_feat_len)]
+    else:
+        best_cuts = sequences_ordered[0]
+        segments = list(zip(best_cuts[0][:-1], best_cuts[0][1:]))
 
     print('segments:', segments)
 
