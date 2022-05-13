@@ -72,6 +72,13 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         model_yaml = yaml.safe_load(stream)
     decoder_yaml_opts = model_yaml['decoder']
 
+    # Check if cmvn is set
+    cmvn_feats = False
+    if decoder_yaml_opts.get('global-cmvn-stats'):
+        cmvn_feats = True
+        cmvn_transformer = cmvn.Cmvn(40)
+        cmvn_transformer.read_stats(f'{models_dir}{decoder_yaml_opts["global-cmvn-stats"]}')
+
     scp_filename = f'tmp/{filenameS_hash}.scp'
     wav_filename = f'tmp/{filenameS_hash}.wav'
     spk2utt_filename = f'tmp/{filenameS_hash}_spk2utt'
@@ -168,6 +175,8 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     with SequentialMatrixReader(feats_rspec) as f, \
             SequentialMatrixReader(ivectors_rspec) as i:
         for (fkey, feats), (ikey, ivectors) in zip(f, i):
+            if cmvn_feats:
+                cmvn_transformer.apply(feats)
             did_decode = True
             assert (fkey == ikey)
             out = asr.decode((feats, ivectors))
