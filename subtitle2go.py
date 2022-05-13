@@ -87,7 +87,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     with open(scp_filename, 'w') as scp_file:
         scp_file.write(f'{filenameS_hash} tmp/{filenameS_hash}.wav\n')
 
-    # write scp file
+    # write spk2utt scp file
     with open(spk2utt_filename, 'w') as scp_file:
         scp_file.write(f'{filenameS_hash} {filenameS_hash}\n')
     
@@ -131,11 +131,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     phi_label = symbols.find_index('#0')
 
     # Define feature pipelines as Kaldi rspecifiers
-    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir + decoder_yaml_opts["mfcc-config"]} scp:' + scp_filename + ' ark:- |')
+    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
     ivectors_rspec = (
-            (f'ark:compute-mfcc-feats --config={models_dir + decoder_yaml_opts["mfcc-config"]} '
+            (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
             f'scp:{scp_filename} ark:- | '
-            f'ivector-extract-online2 --config={models_dir + decoder_yaml_opts["ivector-extraction-config"]} '
+            f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
             f'ark:{spk2utt_filename} ark:- ark:- |'))
 
     rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
