@@ -26,6 +26,7 @@ from kaldi.fstext.utils import get_linear_symbol_sequence
 from kaldi.nnet3 import NnetSimpleComputationOptions
 from kaldi.util.table import SequentialMatrixReader
 from kaldi.lat import functions
+from kaldi.transform import cmvn
 import yaml
 import math
 import argparse
@@ -300,7 +301,7 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
     print('Begin Segmentation')
     
     # Makes a string for segmentation and change the <UNK> Token to UNK
-    word_string = ' '.join([e[0].replace('<UNK>', 'UNK') for e in vtt])
+    word_string = ' '.join([e[0].replace('<UNK>', 'UNK').replace('<unk>', 'UNK') for e in vtt])
     
     # Call the segmentation beamsearch
     segments = segment_text.segment_beamsearch(word_string, model_spacy, beam_size=beam_size, ideal_token_len=ideal_token_len,
@@ -310,13 +311,14 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
     
     temp_segments = []
     temp_segments.append(segments[0])
-    # Corrects punctuation marks when they are slipped
+    # Corrects punctuation marks and also lost tokens when they are slipped
     # to the beginning of the next line
     for current in segments[1:]:    
-        if current[0] == ',' or current[0] == '.':
-            temp_segments[-1] += current[0]
-            current = current[2:]
-        temp_segments.append(current)
+        currentL = current.split(' ')
+        if any(token in currentL[0] for token in (',', '.', "'s", "n't")):
+            temp_segments[-1] += currentL[0]
+            currentL = currentL[1:]
+        temp_segments.append(' '.join(currentL))
     segments = temp_segments
 
     # Cuts the segments in words, removes empty objects and
