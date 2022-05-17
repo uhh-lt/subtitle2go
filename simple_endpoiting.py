@@ -22,7 +22,7 @@ import ffmpeg
 import pylab as plt
 import math
 from python_speech_features import logfbank
-from scipy.ndimage.filters import gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d
 
 
 # All timing are in frames, where one frame is 0.01 seconds.
@@ -103,7 +103,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     if debug:
         for i, segment in enumerate(segments):
             print(segment)
-            out_filename = "segments/%d.wav"%i
+            out_filename = f'segments/{i}.wav'
             print('Writing to:', out_filename)
             print('Segment len:', segment[1]-segment[0])
             wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     filenameS_hash = hex(abs(hash(filenameS)))[2:]
 
-    tmp_file = 'tmp/%s.wav' % filenameS_hash
+    tmp_file = f'tmp/{filenameS_hash}.wav'
 
     # use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
     (
