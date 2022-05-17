@@ -26,8 +26,8 @@ from scipy.ndimage.filters import gaussian_filter1d
 
 
 # All timing are in frames, where one frame is 0.01 seconds.
-def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
-                max_lookahead=100*180, min_len=100*5, step=1, debug=False):
+def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
+                max_lookahead=100*180, min_len=1000*12, step=10, len_reward = 40, debug=False):
 
     samplerate, data = wavfile.read(wav_filename, mmap=False)
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
@@ -53,7 +53,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
 
     cont_search = True
 
-    len_reward_factor = 30. / float(ideal_segment_len)
+    len_reward_factor = len_reward / float(ideal_segment_len)
 
     # Simple Beam search to find good cuts, where the eneregy is low and where its
     # still close to the ideal segment length.
@@ -76,7 +76,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*60,
                 fbank_score = fbank_feat_power_smoothed[last_cut+j]
                 new_score = current_score + len_reward + fbank_score
                 if new_score > current_score:
-                    #print("fbank_score:", fbank_score, "len reward:", len_reward)
+                    # print(f'fbank_score:{fbank_score} len reward:{len_reward}')
                     candidate = [seq_pos + [last_cut + j + 1], new_score]
                     all_candidates.append(candidate)
 
@@ -136,7 +136,7 @@ if __name__ == '__main__':
             .input(filename)
             .output(tmp_file, acodec='pcm_s16le', ac=1, ar='16k')
             .overwrite_output()
-            .run()
+            .run(quiet=True)
     )
 
     process_wav(tmp_file, debug=True)
