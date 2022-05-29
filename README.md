@@ -52,7 +52,7 @@ cd subtitle2go/
 
 virtualenv -p /usr/bin/python3.9 subtitle2go_env
 source subtitle2go_env/bin/activate
-pip3 install numpy pyyaml ffmpeg-python theano spacy pdfplumber python_speech_features scipy
+pip3 install -r requirements.txt
 python3 -m spacy download de_core_news_lg
 python3 -m spacy download en_core_web_lg
 
@@ -95,12 +95,6 @@ and on Mac Os X:
 brew install redis
 ```
 
-The following additional pip packages are also needed:
-
-```
-pip3 install redis flask gunicorn
-```
-
 ## Subtitle2go.py usage
 
 Put a mediafile (eg `mediafile.mp4`) in the directory and then run:
@@ -130,7 +124,9 @@ Redis server needs to be running.
 The following arguments are available:
 
 ```
-usage: subtitle2go.py [-h] [-s {vtt,srt}] [--asr-beam-size ASR_BEAM_SIZE]
+usage: subtitle2go.py [-h] [-s {vtt,srt}] [-l LANGUAGE] [-m MODEL_YAML]
+                           [--rnn-rescore] [--acoustic scale ACOUSTIC_SCALE]
+                           [--asr-beam-size ASR_BEAM_SIZE]
                            [--asr-max-active ASR_MAX_ACTIVE]
                            [--segment-beam-size SEGMENT_BEAM_SIZE]
                            [--ideal-token-len IDEAL_TOKEN_LEN]

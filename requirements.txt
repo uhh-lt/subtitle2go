@@ -1,0 +1,12 @@
+ffmpeg-python
+flask
+gunicorn
+numpy
+pdfplumber
+pylab-sdk
+python_speech_features
+pyyaml
+redis
+scipy
+spacy
+theano
