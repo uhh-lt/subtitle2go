@@ -302,7 +302,7 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
     word_counter = -1
     print('Begin Segmentation')
     
-    # Makes a string for segmentation and change the <UNK> Token to UNK
+    # Makes a string for segmentation and change the <UNK> and <unk> Token to UNK
     word_string = ' '.join([e[0].replace('<UNK>', 'UNK').replace('<unk>', 'UNK') for e in vtt])
     
     # Call the segmentation beamsearch
@@ -315,14 +315,13 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
     temp_segments.append(segments[0])
     # Corrects punctuation marks and also lost tokens when they are slipped
     # to the beginning of the next line
-    for current in segments[1:]:    
+    for current in segments[1:]:
         currentL = current.split(' ')
         if any(token in currentL[0] for token in (',', '.', "'s", "n't")):
             temp_segments[-1] += currentL[0]
             currentL = currentL[1:]
         temp_segments.append(' '.join(currentL))
     segments = temp_segments
-
     # Cuts the segments in words, removes empty objects and
     # and creates the sequences object
     for segment in segments:
@@ -380,7 +379,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--subtitle', help='The output subtitleformat (vtt or srt). Default=vtt',
                         required=False, default='vtt', choices=['vtt', 'srt'])
 
-    parser.add_argument('-l', '--language', help='Set the language of the models', required=False, default='de')
+    parser.add_argument('-l', '--language', help='Sets the language of the models', required=False, default='de')
     
     parser.add_argument('-p', '--pdf', help='Path to the slides (PDF).',
                         required=False)
@@ -440,7 +439,6 @@ if __name__ == '__main__':
     language = args.language
     with open('languages.yaml', 'r') as stream:
         language_yaml = yaml.safe_load(stream)
-        print(language_yaml)
         if language_yaml.get(language, None):
             model_kaldi = language_yaml[language]['kaldi']
             model_punctuation = language_yaml[language]['punctuation']
