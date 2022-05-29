@@ -93,18 +93,28 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     else:
         best_cuts = sequences_ordered[0]
         segments = list(zip(best_cuts[0][:-1], best_cuts[0][1:]))
+    
+    # print(f'{segments=}')
+    
+    # write wave segments
+    filenameS = wav_filename.rpartition('.')[0] # Filename without file extension
+    
+    filename_list = []
+    segment_count = 0
+    for i, segment in enumerate(segments):
+        print(segment)
+        out_filename = f'{filenameS}_{i}.wav'
+        # print('Writing to:', out_filename)
+        # print('Segment len:', segment[1]-segment[0])
+        wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
+        segment_count = i
+        filename_list.append(out_filename)
+    # print('Segment len:', fbank_feat_len-segments[-1][1])
+    filename_last_segment = f'{filenameS}_{segment_count + 1}.wav'
+    wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:fbank_feat_len*160])
+    filename_list.append(filename_last_segment)
 
-    print('segments:', segments)
-
-    if debug:
-        for i, segment in enumerate(segments):
-            print(segment)
-            out_filename = f'segments/{i}.wav'
-            print('Writing to:', out_filename)
-            print('Segment len:', segment[1]-segment[0])
-            wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
-
-    return segments
+    return filename_list, segments
 
 
 if __name__ == '__main__':
