@@ -110,16 +110,17 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     # Construct recognizer
     decoder_opts = LatticeFasterDecoderOptions()
-    decoder_opts.beam = asr_beamsize
-    decoder_opts.max_active = asr_max_active
+    decoder_opts.beam = decoder_yaml_opts['beam']
+    decoder_opts.max_active = decoder_yaml_opts['max-active']
+    decoder_opts.lattice_beam = decoder_yaml_opts['lattice-beam']
     
     # Increase determinzation memory
     # for long files we would otherwise get warnings like this: 
     # 'Did not reach requested beam in determinize-lattice: size exceeds maximum 50000000 bytes'
     decoder_opts.det_opts.max_mem = 2100000000 #2.1gb, value has to be a 32 bit signed integer
     decodable_opts = NnetSimpleComputationOptions()
-    decodable_opts.acoustic_scale = acoustic_scale #1.0
-    decodable_opts.frame_subsampling_factor = 3
+    decodable_opts.acoustic_scale = decoder_yaml_opts['acoustic-scale']
+    decodable_opts.frame_subsampling_factor = 3 # decoder_yaml_opts['frame-subsampling-factor'] # 3
     decodable_opts.frames_per_chunk = 150
     asr = NnetLatticeFasterRecognizer.from_files(
         models_dir + decoder_yaml_opts['model'],
@@ -138,7 +139,6 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
             f'scp:{scp_filename} ark:- | '
             f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
             f'ark:{spk2utt_filename} ark:- ark:- |'))
-
     rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
     
     if do_rnn_rescore and not rnn_rescore_available:
