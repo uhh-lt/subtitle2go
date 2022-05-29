@@ -84,14 +84,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     wav_filename = f'tmp/{filenameS_hash}.wav'
     spk2utt_filename = f'tmp/{filenameS_hash}_spk2utt'
 
-    # write scp file
-    with open(scp_filename, 'w') as scp_file:
-        scp_file.write(f'{filenameS_hash} tmp/{filenameS_hash}.wav\n')
-
-    # write spk2utt scp file
-    with open(spk2utt_filename, 'w') as scp_file:
-        scp_file.write(f'{filenameS_hash} {filenameS_hash}\n')
-    
+    print('Extract audio.')
     if with_redis:
         publish_status(filename, filenameS_hash, 'Extract audio.')
 
