@@ -99,11 +99,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     (
         ffmpeg
             .input(filename)
-            .output(f'tmp/{filenameS_hash}.wav', acodec='pcm_s16le', ac=1, ar='16k')
+            .output(wav_filename, acodec='pcm_s16le', ac=1, ar='16k')
             .overwrite_output()
-            .run()
+            .run(quiet=True)
     )
-
+    print('Audio extracted.')
     if with_redis:
         publish_status(filename, filenameS_hash, 'Audio extracted.')
 
