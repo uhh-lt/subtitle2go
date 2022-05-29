@@ -33,15 +33,13 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
     fbank_feat_power = fbank_feat.sum(axis=-1) / 10.
 
-    print(fbank_feat_power)
-
     fbank_feat_len = len(fbank_feat)
 
     fbank_feat_min_power = min(fbank_feat_power)
     fbank_feat_max_power = max(fbank_feat_power)
 
     fbank_feat_power_smoothed = gaussian_filter1d(fbank_feat_power, sigma=20) * -1.0
-
+    
     if debug:
         print('min:', fbank_feat_min_power, 'max:', fbank_feat_max_power)
 
@@ -61,7 +59,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     # the float value is the combined score for the complete path.
     sequences = [[[0], 0.0]]
     sequences_ordered = [[]]
-
+    
     while cont_search:
         all_candidates = sequences
         cont_search = False
@@ -79,7 +77,6 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
                     # print(f'fbank_score:{fbank_score} len reward:{len_reward}')
                     candidate = [seq_pos + [last_cut + j + 1], new_score]
                     all_candidates.append(candidate)
-
                 # only continue the search, of at least one of the candidates was better than the current score at k
                 if new_score > score_at_k:
                     cont_search = True
@@ -88,8 +85,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         ordered = sorted(all_candidates, key=lambda tup: tup[1], reverse=True)
         # select k best
         sequences_ordered = ordered[:beam_size]
-
-    print(sequences_ordered)
+        sequences = sequences_ordered
 
     # this can happen with very short input wavs
     if len(sequences_ordered[0]) <= 1:
