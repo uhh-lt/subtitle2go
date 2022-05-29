@@ -2,7 +2,7 @@
 
 Subtitle2go is a fully automatic solution for German video subtitling, with a focus on lecture videos. The project uses open source models and scripts for German ASR, automatic punctuation reconstruction and subtitle segmentation. But it should be straight-forward to support other languages as well and PRs are welcome!
 
-Our German Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on 1000h of German speech data.
+Our German Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on about 1700h of German speech data.
 
 [Punctuator2](https://github.com/ottokart/punctuator2) is used for punctuation reconstruction (,.?!)
 
