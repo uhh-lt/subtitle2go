@@ -107,6 +107,15 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     if with_redis:
         publish_status(filename, filenameS_hash, 'Audio extracted.')
 
+    # Segmentation
+    segments_filenames, segments_timing = process_wav(wav_filename)
+
+    # write scp and spk2utt file
+    with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
+        for segment in segments_filenames:
+            fn = segment.rpartition('.')[0]
+            wavscp.write(f'{fn} {segment}\n')
+            spk2utt.write(f'{filenameS_hash} {fn}\n')
 
     # Construct recognizer
     decoder_opts = LatticeFasterDecoderOptions()
