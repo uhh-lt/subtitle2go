@@ -3,6 +3,6 @@ de:
   punctuation: models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl
   spacy: de_core_news_lg
 en:
-  kaldi: models/en_200k_nnet3chain_tdnn1d_2048_sp_bi.yaml
+  kaldi: models/en_200k_nnet3chain_tdnn1f_2048_sp_bi.yaml
   punctuation: models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl
   spacy: en_core_web_lg
