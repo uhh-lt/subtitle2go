@@ -88,7 +88,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         sequences = sequences_ordered
 
     # this can happen with very short input wavs
-    if len(sequences_ordered[0]) <= 1:
+    if len(sequences_ordered[0][0]) <= 1:
         segments = [(0, fbank_feat_len)]
     else:
         best_cuts = sequences_ordered[0]
@@ -110,9 +110,10 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         segment_count = i
         filename_list.append(out_filename)
     # print('Segment len:', fbank_feat_len-segments[-1][1])
-    filename_last_segment = f'{filenameS}_{segment_count + 1}.wav'
-    wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:fbank_feat_len*160])
-    filename_list.append(filename_last_segment)
+    if len(segments) > 1:
+        filename_last_segment = f'{filenameS}_{segment_count + 1}.wav'
+        wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:fbank_feat_len*160])
+        filename_list.append(filename_last_segment)
 
     return filename_list, segments
 
