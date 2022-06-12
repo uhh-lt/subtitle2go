@@ -195,6 +195,7 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     did_decode = False
     # Decode wav files
+    decoding_results = []
     with SequentialMatrixReader(feats_rspec) as f, \
             SequentialMatrixReader(ivectors_rspec) as i:
         for (fkey, feats), (ikey, ivectors) in zip(f, i):
@@ -210,6 +211,27 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
             best_path = functions.compact_lattice_shortest_path(lat)
             words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
             timing = functions.compact_lattice_to_word_alignment(best_path)
+            decoding_results.append((words, timing))
+
+    # print(decoding_results)
+    # print(segments_timing)
+
+    # concatenating the results of the segments and adding an offset to the segments
+    words = []
+    timing = [[],[],[]]
+    for result in decoding_results:
+        words.extend(result[0])
+
+    for result, offset in zip(decoding_results, segments_timing):
+        # print(len(result))
+        timing[0].extend(result[1][0])
+        start = map(lambda x: x + (offset[0] / 3), result[1][1])
+        timing[1].extend(start)
+        timing[2].extend(result[1][2])
+
+    # print('complete:')
+    # print(f'{len(words)=}')
+    # print(f'{len(timing)=}')
 
     if with_redis:
         if did_decode:
@@ -232,6 +254,11 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     os.remove(wav_filename)
     print(f'removing tmp file:{spk2utt_filename}')
     os.remove(spk2utt_filename)
+    print(f'removing audio segments')
+    for file in segments_filenames:
+        print(f'removing {file=}')
+        os.remove(file)
+
 
     if with_redis:
         if did_decode:
