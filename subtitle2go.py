@@ -34,6 +34,10 @@ from kaldi.nnet3 import NnetSimpleComputationOptions
 from kaldi.util.table import SequentialMatrixReader
 from kaldi.lat import functions
 from kaldi.transform import cmvn
+
+# Audio Segmentation
+from simple_endpoiting import process_wav
+
 import yaml
 import math
 import argparse
