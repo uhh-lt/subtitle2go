@@ -196,22 +196,25 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     did_decode = False
     # Decode wav files
     decoding_results = []
-    with SequentialMatrixReader(feats_rspec) as f, \
-            SequentialMatrixReader(ivectors_rspec) as i:
-        for (fkey, feats), (ikey, ivectors) in zip(f, i):
-            if cmvn_feats:
-                cmvn_transformer.apply(feats)
-            did_decode = True
-            assert (fkey == ikey)
-            out = asr.decode((feats, ivectors))
-            if do_rnn_rescore:
-                lat = rescorer.rescore(out['lattice'])
-            else:
-                lat = out['lattice']
-            best_path = functions.compact_lattice_shortest_path(lat)
-            words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
-            timing = functions.compact_lattice_to_word_alignment(best_path)
-            decoding_results.append((words, timing))
+    try:
+        with SequentialMatrixReader(feats_rspec) as f, \
+                SequentialMatrixReader(ivectors_rspec) as i:
+            for (fkey, feats), (ikey, ivectors) in zip(f, i):
+                if cmvn_feats:
+                    cmvn_transformer.apply(feats)
+                did_decode = True
+                assert (fkey == ikey)
+                out = asr.decode((feats, ivectors))
+                if do_rnn_rescore:
+                    lat = rescorer.rescore(out['lattice'])
+                else:
+                    lat = out['lattice']
+                best_path = functions.compact_lattice_shortest_path(lat)
+                words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
+                timing = functions.compact_lattice_to_word_alignment(best_path)
+                decoding_results.append((words, timing))
+    except KeyboardInterrupt:
+        sys.exit()
 
     # print(decoding_results)
     # print(segments_timing)
