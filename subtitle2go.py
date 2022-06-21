@@ -216,8 +216,6 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
     except KeyboardInterrupt:
         sys.exit()
 
-    # print(decoding_results)
-    # print(segments_timing)
 
     # concatenating the results of the segments and adding an offset to the segments
     words = []
@@ -231,10 +229,6 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
         start = map(lambda x: x + (offset[0] / 3), result[1][1])
         timing[1].extend(start)
         timing[2].extend(result[1][2])
-
-    # print('complete:')
-    # print(f'{len(words)=}')
-    # print(f'{len(timing)=}')
 
     if with_redis:
         if did_decode:
@@ -269,29 +263,6 @@ def asr(filenameS_hash, filename, filenameS, asr_beamsize=13, asr_max_active=800
 
     return vtt, words
 
-# baseline sequence splitting every 10 words
-def array_to_squences(vtt):
-    len_array = math.ceil(len(vtt) / 10)
-    sequences = [['' for x in range(3)] for y in range(len_array)]
-    wcounter = 0
-    scounter = 0
-    for a in vtt:
-        if wcounter < 10:
-            if wcounter == 0:  # first word of sequence
-                sequences[scounter][1] = a[1]  # Starttiming of the sequence
-                sequences[scounter][0] = a[0]
-            else:
-                sequences[scounter][0] = sequences[scounter][0] + ' ' + a[0]
-            wcounter += 1
-            sequences[scounter][2] = a[1] + a[2]  # Endtiming of sequence
-        else:
-            wcounter = 1
-            scounter += 1
-            sequences[scounter][0] = a[0]
-            sequences[scounter][1] = a[1]
-            sequences[scounter][2] = a[1] + a[2]
-    return sequences
-
 
 # Adds interpunctuation to the Kaldi output
 def interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, with_redis=False):
@@ -318,7 +289,6 @@ def interpunctuation(vtt, words, filename, filenameS_hash, model_punctuation, wi
         print('Running punctuator failed. Exiting.')
         if with_redis:
             publish_status(filename, filenameS_hash, 'Adding interpunctuation failed.')
-
         sys.exit(-2)
 
     punct_list = file_punct.read().split(' ')
@@ -387,7 +357,6 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
         sequences.append([string_segment, begin_segment, end_segment])
         word_counter = word_counter + segment_length
     return sequences
-
 
 # Creates the subtitle in the desired subtitleFormat and writes to filenameS (filename stripped) + subtitle suffix
 def create_subtitle(sequences, subtitle_format, filenameS):
@@ -528,7 +497,6 @@ if __name__ == '__main__':
     if args.with_redis_updates:
         publish_status(filename, filenameS_hash, 'Segmentation finished.')
 
-    # sequences = array_to_sequences(vtt)
     create_subtitle(sequences, subtitle_format, filenameS)
 
     if args.with_redis_updates:
