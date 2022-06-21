@@ -421,9 +421,6 @@ def create_subtitle(sequences, subtitle_format, filenameS):
                          f'{separator}'
                          f'{int(end_seconds * 1000 % 1000):03}')
 
-        time_end = '{:0>2d}:{:0>2d}:{:0>2d}{}000'.format(int(end_seconds / 3600),
-                                                         int((end_seconds / 60) % 60),
-                                                         int(end_seconds % 60), separator)
         timestring = time_start + ' --> ' + time_end + '\n'
         file.write(timestring)
         file.write(a[0] + '\n\n')
