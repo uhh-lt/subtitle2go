@@ -408,9 +408,18 @@ def create_subtitle(sequences, subtitle_format, filenameS):
         start_seconds = a[1] / 33.333  # Start of sequence in seconds
         end_seconds = a[2] / 33.333  # End of sequence in seconds
         file.write(str(sequence_counter) + '\n')  # number of actual sequence
-        time_start = '{:0>2d}:{:0>2d}:{:0>2d}{}000'.format(int(start_seconds / 3600),
-                                                               int((start_seconds / 60) % 60),
-                                                               int(start_seconds % 60), separator)
+
+        time_start =    (f'{int(start_seconds / 3600):02}:'
+                         f'{int(start_seconds / 60 % 60):02}:'
+                         f'{int(start_seconds % 60):02}'
+                         f'{separator}'
+                         f'{int(start_seconds * 1000 % 1000):03}')
+
+        time_end =    (f'{int(end_seconds / 3600):02}:'
+                         f'{int(end_seconds / 60 % 60):02}:'
+                         f'{int(end_seconds % 60):02}'
+                         f'{separator}'
+                         f'{int(end_seconds * 1000 % 1000):03}')
 
         time_end = '{:0>2d}:{:0>2d}:{:0>2d}{}000'.format(int(end_seconds / 3600),
                                                          int((end_seconds / 60) % 60),
