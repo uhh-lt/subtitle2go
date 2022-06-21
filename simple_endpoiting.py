@@ -109,11 +109,11 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
         segment_count = i
         filename_list.append(out_filename)
-    # print('Segment len:', fbank_feat_len-segments[-1][1])
-    if len(segments) > 1:
+    if segments[-1][1] < fbank_feat_len:
         filename_last_segment = f'{filenameS}_{segment_count + 1}.wav'
-        wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:fbank_feat_len*160])
+        wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:])
         filename_list.append(filename_last_segment)
+        segments.append((segments[-1][1], fbank_feat_len))
 
     return filename_list, segments
 
