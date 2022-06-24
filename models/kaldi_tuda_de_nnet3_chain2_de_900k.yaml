@@ -1,0 +1,54 @@
+# You have to download Librispeech "online nnet2" models in order to use this sample
+use-nnet2: True
+decoder:
+    nnet-mode: 3
+    use-threaded-decoder: True
+    model : de_900k_nnet3chain_tdnn1f_2048_sp_bi/final.mdl
+    word-syms : de_900k_nnet3chain_tdnn1f_2048_sp_bi/words.txt
+    fst : de_900k_nnet3chain_tdnn1f_2048_sp_bi/HCLG.fst
+    arpa : de_900k_G.carpa
+    rnnlm : de_900k_rnnlm_lstm_4x/
+    #    feature-type : "mfcc"
+    mfcc-config : de_900k_nnet3chain_tdnn1f_2048_sp_bi/conf/mfcc_hires.conf
+    frame-subsampling-factor: 3
+    ivector-extraction-config : de_900k_nnet3chain_tdnn1f_2048_sp_bi/ivector_extractor/ivector_extractor.conf
+    #    max-active: 10000
+    #    beam: 10.0
+    max-active: 10000
+    beam: 5.0
+    lattice-beam: 5.0
+    acoustic-scale: 1.0 #0.083
+    do-endpointing : true
+    endpoint-silence-phones : "1:2:3:4:5:6"
+    traceback-period-in-secs: 0.25
+    chunk-length-in-secs: 0.25
+    num-nbest: 10
+    phone-syms: de_900k_nnet3chain_tdnn1f_2048_sp_bi/phones.txt
+    #word-boundary-file: de_350k_nnet3chain_tdnn1f_1024_sp_bi/phones/word_boundary.int
+    #do-phone-alignment: true
+out-dir: tmp
+
+use-vad: False
+silence-timeout: 15
+
+# Just a sample post-processor that appends "." to the hypothesis
+post-processor: perl -npe 'BEGIN {use IO::Handle; STDOUT->autoflush(1);} s/(.*)/\1./;'
+
+# A sample full post processor that add a confidence score to 1-best hyp and deletes other n-best hyps
+#full-post-processor: ./sample_full_post_processor.py
+
+logging:
+    version : 1
+    disable_existing_loggers: False
+    formatters:
+        simpleFormater:
+            format: '%(asctime)s - %(levelname)7s: %(name)10s: %(message)s'
+            datefmt: '%Y-%m-%d %H:%M:%S'
+    handlers:
+        console:
+            class: logging.StreamHandler
+            formatter: simpleFormater
+            level: DEBUG
+    root:
+        level: DEBUG
+        handlers: [console]
