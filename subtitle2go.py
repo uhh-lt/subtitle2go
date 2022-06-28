@@ -242,6 +242,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         status.publish_status('ASR finished.')
     else:
         status.publish_status('ASR error.')
+        sys.exit(-1)
 
     assert(did_decode)
 
@@ -253,19 +254,16 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
     # Cleanup tmp files
     try:
-        print(f'removing tmp file:{scp_filename}')
         os.remove(scp_filename)
-        print(f'removing tmp file:{wav_filename}')
         os.remove(wav_filename)
-        print(f'removing tmp file:{spk2utt_filename}')
         os.remove(spk2utt_filename)
-        print(f'removing audio segments')
         for file in segments_filenames:
             print(f'removing {file=}')
             os.remove(file)
         status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
     except Exception as e:
-        status.publish_status(e)
+        status.publish_status(f'Removing files failed')
+        status.publish_status(f'Complete Errormessage: {e}')
 
     if did_decode:
         status.publish_status('VTT finished.')
@@ -278,8 +276,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     raw_filename = f'tmp/{filenameS_hash}_raw.txt'
     token_filename = f'tmp/{filenameS_hash}_token.txt'
     readable_filename = f'tmp/{filenameS_hash}_readable.txt'
-    
-    print('Starting interpunctuation')
    
     status.publish_status('Starting interpunctuation.')
 
@@ -372,7 +368,6 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
 def create_subtitle(sequences, subtitle_format, filenameS):
     status.publish_status('Start creating subtitle.')
 
-    print('Creating subtitle')
     try:
         if subtitle_format == 'vtt':
             file = open(filenameS + '.vtt', 'w')
@@ -405,6 +400,7 @@ def create_subtitle(sequences, subtitle_format, filenameS):
             file.write(a[0] + '\n\n')
             sequence_counter += 1
         file.close()
+
     except Exception as e:
         status.publish_status('Creating subtitle failed.')
         status.publish_status(f'Complete Errormessage: {e}')
