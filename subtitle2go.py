@@ -289,7 +289,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
 
     # BERT
     text = ' '.join(words)
-    print(f'{text=}')
     rpunct = RestorePuncts(model='interpunct_de_rpunct')
     
     punct = rpunct.punctuate(text)
