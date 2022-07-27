@@ -68,15 +68,13 @@ pip3 install pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
 # OR if you have a non-Intel CPU:
 ./install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
-# Install punctuator2 for automatic punctuation
-git clone https://github.com/ottokart/punctuator2.git
+# Install rpunct
+git clone https://github.com/Alienmaster/rpunct
+pip3 install -r rpunct/requirements.txt
 
-# Patch punctuator2:
-
-Open punctuator2/models.py in a file editor, go to line 54 and replace "from . import models" with "import models"
-
-# Download pretrained models:
-./download_models.sh
+# Download Model
+wget http://ltdata1.informatik.uni-hamburg.de/subtitle2go/interpunct_de_rpunct.tar.gz
+tar xfvz interpunct_de_rpunct.tar.gz
 ```
 
 ## Optional: redis status updates

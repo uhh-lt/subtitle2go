@@ -32,6 +32,9 @@ from kaldi.transform import cmvn
 # Audio Segmentation
 from simple_endpoiting import process_wav
 
+# Interpunctuation
+from rpunct.rpunct import RestorePuncts
+
 import yaml
 import math
 import argparse
@@ -273,28 +276,37 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
 # Adds interpunctuation to the Kaldi output
 def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
-    raw_filename = f'tmp/{filenameS_hash}_raw.txt'
-    token_filename = f'tmp/{filenameS_hash}_token.txt'
-    readable_filename = f'tmp/{filenameS_hash}_readable.txt'
+    # raw_filename = f'tmp/{filenameS_hash}_raw.txt'
+    # token_filename = f'tmp/{filenameS_hash}_token.txt'
+    # readable_filename = f'tmp/{filenameS_hash}_readable.txt'
    
     status.publish_status('Starting interpunctuation.')
 
     # Input file for Punctuator2
-    raw_file = open(raw_filename, 'w')
-    raw_file.write(' '.join(words))
-    raw_file.close()
+    # raw_file = open(raw_filename, 'w')
+    # raw_file.write(' '.join(words))
+    # raw_file.close()
+
+    # BERT
+    text = ' '.join(words)
+    print(f'{text=}')
+    rpunct = RestorePuncts(model='interpunct_de_rpunct')
+    
+    punct = rpunct.punctuate(text, lang='en')
+
+    punct_list = punct.split(' ')
 
     # Starts Punctuator2 to add interpunctuation
-    os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
+    # os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
     
-    try:
-        file_punct = open(readable_filename, 'r')
-    except:
-        print('Running punctuator failed. Exiting.')
-        status.publish_status('Adding interpunctuation failed.')
-        sys.exit(-2)
+    # try:
+    #     file_punct = open(readable_filename, 'r')
+    # except:
+    #     print('Running punctuator failed. Exiting.')
+    #     status.publish_status('Adding interpunctuation failed.')
+    #     sys.exit(-2)
 
-    punct_list = file_punct.read().split(' ')
+    # punct_list = file_punct.read().split(' ')
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Replaces the adapted words with the (capitalization, period, comma) with the new ones
         if a != b[0]:
@@ -303,12 +315,12 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
             vtt_punc.append(b)
     
     # Cleanup tmp files
-    print(f'removing tmp file:{raw_filename}')
-    os.remove(raw_filename)
-    print(f'removing tmp file:{token_filename}')
-    os.remove(token_filename)
-    print(f'removing tmp file:{readable_filename}')
-    os.remove(readable_filename)
+    # print(f'removing tmp file:{raw_filename}')
+    # os.remove(raw_filename)
+    # print(f'removing tmp file:{token_filename}')
+    # os.remove(token_filename)
+    # print(f'removing tmp file:{readable_filename}')
+    # os.remove(readable_filename)
 
     status.publish_status('Adding interpunctuation finished.')
 
