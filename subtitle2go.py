@@ -292,7 +292,7 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     print(f'{text=}')
     rpunct = RestorePuncts(model='interpunct_de_rpunct')
     
-    punct = rpunct.punctuate(text, lang='en')
+    punct = rpunct.punctuate(text)
 
     punct_list = punct.split(' ')
 
