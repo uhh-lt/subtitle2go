@@ -71,7 +71,7 @@ class output_status():
                                                     'file_id': self.filenameS_hash, 'filename': self.filename,
                                                     'status': status}))
 
-#make sure a fpath directory exists
+# Make sure a fpath directory exists
 def ensure_dir(fpath):
     directory = os.path.dirname(fpath)
     if not os.path.exists(directory):
@@ -152,7 +152,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     except Exception as e:
         status.publish_status('Audio segmentation failed.')
         status.publish_status(f'Complete Errormessage: {e}')
-        sys.ext(-1)
+        sys.exit(-1)
 
     # write scp and spk2utt file
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
@@ -338,7 +338,7 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
 
     status.publish_status('Start text segmentation.')
 
-    # array starts at zero
+    # Array starts at zero
     word_counter = -1
     
     # Makes a string for segmentation and change the <UNK> and <unk> Token to UNK
@@ -367,7 +367,7 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
         clean_segment = list(filter(None, segment.split(' ')))
         string_segment = ' '.join(clean_segment)
         segment_length = len(clean_segment)
-        # fixes problems with the first token. The first token is everytime 0.
+        # Fixes problems with the first token. The first token is everytime 0
         if vtt[word_counter + 1][1] == 0:
             begin_segment = vtt[word_counter + 2][1]
         else:
@@ -395,7 +395,7 @@ def create_subtitle(sequences, subtitle_format, filenameS):
 
         sequence_counter = 1
         for a in sequences:
-            start_seconds = a[1] / 33.333 # Start of sequence in seconds TODO: Test mit 3 statt 33
+            start_seconds = a[1] / 33.333 # Start of sequence in seconds
             end_seconds = a[2] / 33.333 # End of sequence in seconds
             file.write(str(sequence_counter) + '\n')  # number of actual sequence
 
@@ -428,7 +428,7 @@ if __name__ == '__main__':
     # Argument parser
     parser = argparse.ArgumentParser()
 
-    # flag (- and --) arguments
+    # Flag (- and --) arguments
     parser.add_argument('-s', '--subtitle', help='The output subtitleformat (vtt or srt). Default=vtt',
                         required=False, default='vtt', choices=['vtt', 'srt'])
 
@@ -478,7 +478,7 @@ if __name__ == '__main__':
     parser.add_argument('--with-redis-updates', help='Update a redis instance about the current progress.',
                         action='store_true', default=False)
 
-    # positional argument, without (- and --)
+    # Positional argument, without (- and --)
     parser.add_argument('filename', help='The path of the mediafile', type=str)
 
     args = parser.parse_args()
@@ -494,7 +494,7 @@ if __name__ == '__main__':
     # Init status class
     status = output_status(redis=args.with_redis_updates, filename=filename, filenameS_hash=filenameS_hash)
 
-    # language
+    # Language selection
     language = args.language
     with open('languages.yaml', 'r') as stream:
         language_yaml = yaml.safe_load(stream)
