@@ -226,6 +226,11 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
                 timing = functions.compact_lattice_to_word_alignment(best_path)
                 decoding_results.append((words, timing))
     except KeyboardInterrupt:
+        status.publish_status('Decoding aborted. Ctrl-C pressed')
+        sys.exit(-1)
+    except Exception as e:
+        status.publish_status('Decoding failed.')
+        status.publish_status(f'Complete Errormessage: {e}')
         sys.exit(-1)
 
 
