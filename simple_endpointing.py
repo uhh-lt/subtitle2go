@@ -74,7 +74,6 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
                 fbank_score = fbank_feat_power_smoothed[last_cut+j]
                 new_score = current_score + len_reward + fbank_score
                 if new_score > current_score:
-                    # print(f'fbank_score:{fbank_score} len reward:{len_reward}')
                     candidate = [seq_pos + [last_cut + j + 1], new_score]
                     all_candidates.append(candidate)
                 # Only continue the search, of at least one of the candidates was better than the current score at k
@@ -103,10 +102,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     filename_list = []
     segment_count = 0
     for i, segment in enumerate(segments):
-        # print(segment)
         out_filename = f'{filenameS}_{i}.wav'
-        # print('Writing to:', out_filename)
-        # print('Segment len:', segment[1]-segment[0])
         wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
         segment_count = i
         filename_list.append(out_filename)
@@ -147,5 +143,5 @@ if __name__ == '__main__':
             .run(quiet=True)
     )
 
-    result = process_wav(tmp_file, debug=True)
+    result = process_wav(tmp_file, debug=False)
     print(result)
