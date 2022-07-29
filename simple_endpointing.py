@@ -94,8 +94,8 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         best_cuts = sequences_ordered[0]
         segments = list(zip(best_cuts[0][:-1], best_cuts[0][1:]))
     
-    # print(f'{segments=}')
-    # print(f'{fbank_feat_len=}')
+    # This prevents the overlapping of segments
+    segments = [(x[0]+1, x[1]) if x[0]!=0 else (x[0], x[1]) for x in segments]
     
     # Write wave segments
     filenameS = wav_filename.rpartition('.')[0] # Filename without file extension
