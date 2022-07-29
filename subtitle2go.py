@@ -87,7 +87,7 @@ def preprocess_audio(filename, wav_filename):
             .overwrite_output()
             .run(quiet=True)
     )
-    
+
 def recognizer(decoder_yaml_opts, models_dir):
     decoder_opts = LatticeFasterDecoderOptions()
     decoder_opts.beam = decoder_yaml_opts['beam']
@@ -110,9 +110,8 @@ def recognizer(decoder_yaml_opts, models_dir):
     
     return asr
 
-# This is the main function that sets up the Kaldi decoder, loads the model and sets it up to decode the input file.
-def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic_scale=1.0, lm_scale=0.5,
-         do_rnn_rescore=False, config_file='models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml'):
+# This method contains all Kaldi related calls and methods. It decodes the audio
+def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing):
 
     models_dir = 'models/'
 
@@ -121,12 +120,97 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         model_yaml = yaml.safe_load(stream)
     decoder_yaml_opts = model_yaml['decoder']
 
+    # Construct recognizer
+    fr = recognizer(decoder_yaml_opts, models_dir)
+
     # Check if cmvn is set
-    cmvn_feats = False
+    cmvn_transformer = None
     if decoder_yaml_opts.get('global-cmvn-stats'):
-        cmvn_feats = True
         cmvn_transformer = cmvn.Cmvn(40)
         cmvn_transformer.read_stats(f'{models_dir}{decoder_yaml_opts["global-cmvn-stats"]}')
+
+    # Construct symbol table
+    symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts['word-syms'])
+    # phi_label = symbols.find_index('#0')
+
+    # Define feature pipelines as Kaldi rspecifiers
+    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
+    ivectors_rspec = (
+            (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
+            f'scp:{scp_filename} ark:- | '
+            f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
+            f'ark:{spk2utt_filename} ark:- ark:- |'))
+    rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
+
+    if do_rnn_rescore and not rnn_rescore_available:
+        status.publish_status("Warning, disabling RNNLM rescoring since 'rnnlm' is not in the decoder options of the .yaml config.")
+
+    if do_rnn_rescore and rnn_rescore_available:
+        status.publish_status('Loading language model rescorer.')
+        rnn_lm_folder = models_dir + decoder_yaml_opts['rnnlm'] 
+        arpa_G = models_dir + decoder_yaml_opts['arpa'] 
+        old_lm = models_dir + decoder_yaml_opts['fst'] 
+
+        print(f'Loading RNNLM rescorer from:{rnn_lm_folder} with ARPA from:{arpa_G} FST:{old_lm}')
+        # Construct RNNLM rescorer
+        symbols = SymbolTable.read_text(rnn_lm_folder+'/config/words.txt')
+        rnnlm_opts = RnnlmComputeStateComputationOptions()
+        rnnlm_opts.bos_index = symbols.find_index('<s>')
+        rnnlm_opts.eos_index = symbols.find_index('</s>')
+        rnnlm_opts.brk_index = symbols.find_index('<brk>')
+        compose_opts = ComposeLatticePrunedOptions()
+        compose_opts.lattice_compose_beam = 6
+        print(f'rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|')
+        print(f'{rnn_lm_folder}/final.raw')
+        rescorer = LatticeRnnlmPrunedRescorer.from_files(
+            arpa_G,
+            f'rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|',
+            f'{rnn_lm_folder}/final.raw', lm_scale=lm_scale, acoustic_scale=acoustic_scale, max_ngram_order=4,
+            use_const_arpa=True, opts=rnnlm_opts, compose_opts=compose_opts)
+
+    did_decode = False
+    decoding_results = []
+
+    with SequentialMatrixReader(feats_rspec) as f, \
+            SequentialMatrixReader(ivectors_rspec) as i:
+            for (fkey, feats), (ikey, ivectors) in zip(f, i):
+                if cmvn_transformer:
+                    cmvn_transformer.apply(feats)
+                did_decode = True
+                assert (fkey == ikey)
+                out = fr.decode((feats, ivectors))
+                if do_rnn_rescore:
+                    lat = rescorer.rescore(out['lattice'])
+                else:
+                    lat = out['lattice']
+                best_path = functions.compact_lattice_shortest_path(lat)
+                words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
+                timing = functions.compact_lattice_to_word_alignment(best_path)
+                decoding_results.append((words, timing))
+    
+    # Concatenating the results of the segments and adding an offset to the segments
+    words = []
+    timing = [[],[],[]]
+    for result in decoding_results:
+        words.extend(result[0])
+
+    for result, offset in zip(decoding_results, segments_timing):
+        timing[0].extend(result[1][0])
+        start = map(lambda x: x + (offset[0] / 3), result[1][1])
+        timing[1].extend(start)
+        timing[2].extend(result[1][2])
+
+    # Maps words to the numbers
+    words = indices_to_symbols(symbols, timing[0])
+
+    # Creates the datastructure (Word, begin(Frames), end(Frames))
+    vtt = list(map(list, zip(words, timing[1], timing[2])))
+
+    return vtt, did_decode, words
+
+# This is the asr function that converts the videofile, split the video into segments and decodes
+def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic_scale=1.0, lm_scale=0.5,
+         do_rnn_rescore=False, config_file='models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml'):
 
     scp_filename = f'tmp/{filenameS_hash}.scp'
     wav_filename = f'tmp/{filenameS_hash}.wav'
@@ -154,77 +238,25 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         status.publish_status(f'Complete Errormessage: {e}')
         sys.exit(-1)
 
-    # write scp and spk2utt file
+    print(f'{segments_filenames=}')
+    print(f'{segments_timing=}')
+    # Write scp and spk2utt file
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
         for segment in segments_filenames:
-            fn = segment.rpartition('.')[0]
-            wavscp.write(f'{fn} {segment}\n')
-            spk2utt.write(f'{filenameS_hash} {fn}\n')
+            segmentFilename = segment.rpartition('.')[0]
+            wavscp.write(f'{segmentFilename} {segment}\n')
+            spk2utt.write(f'{filenameS_hash} {segmentFilename}\n')
 
-    # Construct recognizer
-    asr = recognizer(decoder_yaml_opts, models_dir)
-
-    # Construct symbol table
-    symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts['word-syms'])
-    phi_label = symbols.find_index('#0')
-
-    # Define feature pipelines as Kaldi rspecifiers
-    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
-    ivectors_rspec = (
-            (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
-            f'scp:{scp_filename} ark:- | '
-            f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
-            f'ark:{spk2utt_filename} ark:- ark:- |'))
-    rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
-    
-    if do_rnn_rescore and not rnn_rescore_available:
-        status.publish_status("Warning, disabling RNNLM rescoring since 'rnnlm' is not in the decoder options of the .yaml config.")
-
-    if do_rnn_rescore and rnn_rescore_available:
-        status.publish_status('Loading language model rescorer.')
-        rnn_lm_folder = models_dir + decoder_yaml_opts['rnnlm'] 
-        arpa_G = models_dir + decoder_yaml_opts['arpa'] 
-        old_lm = models_dir + decoder_yaml_opts['fst'] 
-
-        print(f'Loading RNNLM rescorer from:{rnn_lm_folder} with ARPA from:{arpa_G} FST:{old_lm}')
-        # Construct RNNLM rescorer
-        symbols = SymbolTable.read_text(rnn_lm_folder+'/config/words.txt')
-        rnnlm_opts = RnnlmComputeStateComputationOptions()
-        rnnlm_opts.bos_index = symbols.find_index('<s>')
-        rnnlm_opts.eos_index = symbols.find_index('</s>')
-        rnnlm_opts.brk_index = symbols.find_index('<brk>')
-        compose_opts = ComposeLatticePrunedOptions()
-        compose_opts.lattice_compose_beam = 6
-        print(f'rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|')
-        print(f'{rnn_lm_folder}/final.raw')
-        rescorer = LatticeRnnlmPrunedRescorer.from_files(
-            arpa_G,
-            f'rnnlm-get-word-embedding {rnn_lm_folder}/word_feats.txt {rnn_lm_folder}/feat_embedding.final.mat -|',
-            f'{rnn_lm_folder}/final.raw', lm_scale=lm_scale, acoustic_scale=acoustic_scale, max_ngram_order=4,
-            use_const_arpa=True, opts=rnnlm_opts, compose_opts=compose_opts)
-
-    status.publish_status('Start ASR.')
-
-    did_decode = False
     # Decode wav files
-    decoding_results = []
+    status.publish_status('Start ASR.')
     try:
-        with SequentialMatrixReader(feats_rspec) as f, \
-                SequentialMatrixReader(ivectors_rspec) as i:
-            for (fkey, feats), (ikey, ivectors) in zip(f, i):
-                if cmvn_feats:
-                    cmvn_transformer.apply(feats)
-                did_decode = True
-                assert (fkey == ikey)
-                out = asr.decode((feats, ivectors))
-                if do_rnn_rescore:
-                    lat = rescorer.rescore(out['lattice'])
-                else:
-                    lat = out['lattice']
-                best_path = functions.compact_lattice_shortest_path(lat)
-                words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
-                timing = functions.compact_lattice_to_word_alignment(best_path)
-                decoding_results.append((words, timing))
+        vtt, did_decode, words = Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing)
+        if did_decode:
+            status.publish_status('ASR finished.')
+        else:
+            status.publish_status('ASR error.')
+            sys.exit(-1)
+
     except KeyboardInterrupt:
         status.publish_status('Decoding aborted. Ctrl-C pressed')
         sys.exit(-1)
@@ -233,48 +265,19 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         status.publish_status(f'Complete Errormessage: {e}')
         sys.exit(-1)
 
-
-    # Concatenating the results of the segments and adding an offset to the segments
-    words = []
-    timing = [[],[],[]]
-    for result in decoding_results:
-        words.extend(result[0])
-
-    for result, offset in zip(decoding_results, segments_timing):
-        timing[0].extend(result[1][0])
-        start = map(lambda x: x + (offset[0] / 3), result[1][1])
-        timing[1].extend(start)
-        timing[2].extend(result[1][2])
-
-    if did_decode:
-        status.publish_status('ASR finished.')
-    else:
-        status.publish_status('ASR error.')
-        sys.exit(-1)
-
-    assert(did_decode)
-
-    # Maps words to the numbers
-    words = indices_to_symbols(symbols, timing[0])
-
-    # Creates the datastructure (Word, begin(Frames), end(Frames))
-    vtt = list(map(list, zip(words, timing[1], timing[2])))
-
     # Cleanup tmp files
     try:
         os.remove(scp_filename)
         os.remove(wav_filename)
         os.remove(spk2utt_filename)
-        for file in segments_filenames:
-            print(f'removing {file=}')
-            os.remove(file)
+        for segment_file in segments_filenames:
+            os.remove(segment_file)
         status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
     except Exception as e:
         status.publish_status(f'Removing files failed')
         status.publish_status(f'Complete Errormessage: {e}')
 
-    if did_decode:
-        status.publish_status('VTT finished.')
+    status.publish_status('VTT finished.')
 
     return vtt, words
 
