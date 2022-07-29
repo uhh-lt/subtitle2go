@@ -30,7 +30,7 @@ from kaldi.lat import functions
 from kaldi.transform import cmvn
 
 # Audio Segmentation
-from simple_endpoiting import process_wav
+from simple_endpointing import process_wav
 
 # Interpunctuation
 from rpunct.rpunct import RestorePuncts

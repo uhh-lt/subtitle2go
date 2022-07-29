@@ -55,7 +55,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
 
     # Simple Beam search to find good cuts, where the eneregy is low and where its
     # still close to the ideal segment length.
-    # sequences are of this shape; first list keeps track of the split positions,
+    # Sequences are of this shape; first list keeps track of the split positions,
     # the float value is the combined score for the complete path.
     sequences = [[[0], 0.0]]
     sequences_ordered = [[]]
@@ -68,8 +68,8 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
             seq_pos, current_score = sequences[i]
             last_cut = (seq_pos[-1] if (len(seq_pos) > 0) else 0)
             score_at_k = sequences[-1][1]
-            # search over all tokens, min_len to max_lookahead
-            for j in range(min_len, min(max_lookahead, fbank_feat_len - last_cut - 1), step):
+            # Search over all tokens, min_len to max_lookahead
+            for j in range(min_len, min(max_lookahead, fbank_feat_len - last_cut - 1), step): # <-- TODO without -1?
                 len_reward = len_reward_factor * (ideal_segment_len - math.fabs(ideal_segment_len - float(j)))
                 fbank_score = fbank_feat_power_smoothed[last_cut+j]
                 new_score = current_score + len_reward + fbank_score
@@ -77,17 +77,17 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
                     # print(f'fbank_score:{fbank_score} len reward:{len_reward}')
                     candidate = [seq_pos + [last_cut + j + 1], new_score]
                     all_candidates.append(candidate)
-                # only continue the search, of at least one of the candidates was better than the current score at k
+                # Only continue the search, of at least one of the candidates was better than the current score at k
                 if new_score > score_at_k:
                     cont_search = True
 
-        # order all candidates by score
+        # Order all candidates by score
         ordered = sorted(all_candidates, key=lambda tup: tup[1], reverse=True)
-        # select k best
+        # Select k best
         sequences_ordered = ordered[:beam_size]
         sequences = sequences_ordered
 
-    # this can happen with very short input wavs
+    # This can happen with very short input wavs
     if len(sequences_ordered[0][0]) <= 1:
         segments = [(0, fbank_feat_len)]
     else:
@@ -95,14 +95,15 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
         segments = list(zip(best_cuts[0][:-1], best_cuts[0][1:]))
     
     # print(f'{segments=}')
+    # print(f'{fbank_feat_len=}')
     
-    # write wave segments
+    # Write wave segments
     filenameS = wav_filename.rpartition('.')[0] # Filename without file extension
     
     filename_list = []
     segment_count = 0
     for i, segment in enumerate(segments):
-        print(segment)
+        # print(segment)
         out_filename = f'{filenameS}_{i}.wav'
         # print('Writing to:', out_filename)
         # print('Segment len:', segment[1]-segment[0])
@@ -126,7 +127,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--average-segment-length', help='Average segment length in seconds.',
                                      type=float, default=60.0)
 
-    # positional argument, without (- and --)
+    # Positional argument, without (- and --)
     parser.add_argument('filename', help='The path of the mediafile', type=str)
 
     args = parser.parse_args()
@@ -137,7 +138,7 @@ if __name__ == '__main__':
 
     tmp_file = f'tmp/{filenameS_hash}.wav'
 
-    # use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
+    # Use FFmpeg to convert the input media file to 16 kHz wav mono
     (
         ffmpeg
             .input(filename)
@@ -146,4 +147,5 @@ if __name__ == '__main__':
             .run(quiet=True)
     )
 
-    process_wav(tmp_file, debug=True)
+    result = process_wav(tmp_file, debug=True)
+    print(result)
