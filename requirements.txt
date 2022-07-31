@@ -10,3 +10,4 @@ redis
 scipy
 spacy
 theano
+https://ltdata1.informatik.uni-hamburg.de/pykaldi/pykaldi-0.2.2-cp39-cp39-linux_x86_64.whl
