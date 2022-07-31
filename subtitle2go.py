@@ -171,9 +171,11 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     did_decode = False
     decoding_results = []
 
+    segmentcounter = 1
     with SequentialMatrixReader(feats_rspec) as f, \
             SequentialMatrixReader(ivectors_rspec) as i:
             for (fkey, feats), (ikey, ivectors) in zip(f, i):
+                status.publish_status(f'Decoding segment {segmentcounter} of {len(segments_timing)}.')
                 if cmvn_transformer:
                     cmvn_transformer.apply(feats)
                 did_decode = True
@@ -187,6 +189,7 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
                 words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
                 timing = functions.compact_lattice_to_word_alignment(best_path)
                 decoding_results.append((words, timing))
+                segmentcounter+=1
     
     # Concatenating the results of the segments and adding an offset to the segments
     words = []
