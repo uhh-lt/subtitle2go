@@ -23,11 +23,12 @@ import pylab as plt
 import math
 from python_speech_features import logfbank
 from scipy.ndimage import gaussian_filter1d
-
+import audiosegment
+import numpy as np
 
 # All timing are in frames, where one frame is 0.01 seconds.
-def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
-                max_lookahead=100*180, min_len=1000*12, step=10, len_reward = 40, debug=False):
+def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*3,
+                max_lookahead=100*180, min_len=1000*2, step=10, len_reward = 40, debug=False):
 
     samplerate, data = wavfile.read(wav_filename, mmap=False)
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
@@ -101,14 +102,22 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=100*300,
     
     filename_list = []
     segment_count = 0
+    silence = audiosegment.silent(duration=220, frame_rate=samplerate)
+    silenceS = audiosegment.silent(duration=115, frame_rate=samplerate)
     for i, segment in enumerate(segments):
+        actual_segment = silence.to_numpy_array()
+        actual_segment = np.append(actual_segment, data[segment[0]*160:segment[1]*160])
+        actual_segment = np.append(actual_segment, silenceS.to_numpy_array())
         out_filename = f'{filenameS}_{i}.wav'
-        wavfile.write(out_filename, samplerate, data[segment[0]*160:segment[1]*160])
+        wavfile.write(out_filename, samplerate, actual_segment)
         segment_count = i
         filename_list.append(out_filename)
+    
+    last_segment = silence.to_numpy_array()
+    last_segment = np.append(last_segment, data[segments[-1][1]*160:])
     if segments[-1][1] < fbank_feat_len:
         filename_last_segment = f'{filenameS}_{segment_count + 1}.wav'
-        wavfile.write(filename_last_segment, samplerate, data[segments[-1][1]*160:])
+        wavfile.write(filename_last_segment, samplerate, last_segment)
         filename_list.append(filename_last_segment)
         segments.append((segments[-1][1]+1, fbank_feat_len))
 
