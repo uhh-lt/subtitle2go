@@ -22,6 +22,7 @@ from kaldi.asr import NnetLatticeFasterRecognizer, LatticeLmRescorer, LatticeRnn
 from kaldi.rnnlm import RnnlmComputeStateComputationOptions
 from kaldi.decoder import LatticeFasterDecoderOptions
 from kaldi.lat.functions import ComposeLatticePrunedOptions
+from kaldi.lat.align import read_lexicon_for_word_align
 from kaldi.fstext import SymbolTable, shortestpath, indices_to_symbols
 from kaldi.fstext.utils import get_linear_symbol_sequence
 from kaldi.nnet3 import NnetSimpleComputationOptions
@@ -36,10 +37,8 @@ from simple_endpointing import process_wav
 from rpunct.rpunct import RestorePuncts
 
 import yaml
-import math
 import argparse
 import ffmpeg
-import os
 import segment_text
 import slide_stripper
 import json
@@ -79,7 +78,7 @@ def ensure_dir(fpath):
 
 
 def preprocess_audio(filename, wav_filename):
-    # use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
+    # Use ffmpeg to convert the input media file (any format!) to 16 kHz wav mono
     (
         ffmpeg
             .input(filename)
@@ -102,18 +101,20 @@ def recognizer(decoder_yaml_opts, models_dir):
     decodable_opts.acoustic_scale = decoder_yaml_opts['acoustic-scale']
     decodable_opts.frame_subsampling_factor = 3 # decoder_yaml_opts['frame-subsampling-factor'] # 3
     decodable_opts.frames_per_chunk = 150
-    asr = NnetLatticeFasterRecognizer.from_files(
+    fr = NnetLatticeFasterRecognizer.from_files(
         models_dir + decoder_yaml_opts['model'],
         models_dir + decoder_yaml_opts['fst'],
         models_dir + decoder_yaml_opts['word-syms'],
         decoder_opts=decoder_opts, decodable_opts=decodable_opts)
     
-    return asr
+    return fr
 
-# This method contains all Kaldi related calls and methods. It decodes the audio
-def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing):
+# This method contains all Kaldi related calls and methods
+def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale):
 
     models_dir = 'models/'
+    scp_filename = 'tmp/5cb74585a8c0b6a.scp'
+    spk2utt_filename = 'tmp/5cb74585a8c0b6a_spk2utt'
 
     # Read yaml File
     with open(config_file, 'r') as stream:
@@ -132,14 +133,23 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     # Construct symbol table
     symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts['word-syms'])
     # phi_label = symbols.find_index('#0')
-
+    segments_filename = f'{scp_filename.partition(".scp")[0]}_segments'
     # Define feature pipelines as Kaldi rspecifiers
-    feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
+    # feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
+    feats_rspec = (f'ark:extract-segments scp,p:{scp_filename} {segments_filename} ark:- | compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} ark:- ark:- |')
+    # ivectors_rspec = (
+    #         (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
+    #         f'scp:{scp_filename} ark:- | '
+    #         f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
+    #         f'ark:{spk2utt_filename} ark:- ark:- |'))
+    
     ivectors_rspec = (
-            (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
-            f'scp:{scp_filename} ark:- | '
+            (f'ark:extract-segments scp,p:{scp_filename} {segments_filename} ark:- | compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
+            f'ark:- ark:- | '
             f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
             f'ark:{spk2utt_filename} ark:- ark:- |'))
+    
+    
     rnn_rescore_available = 'rnnlm' in decoder_yaml_opts
 
     if do_rnn_rescore and not rnn_rescore_available:
@@ -190,18 +200,39 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
                 timing = functions.compact_lattice_to_word_alignment(best_path)
                 decoding_results.append((words, timing))
                 segmentcounter+=1
-    
+    print(decoding_results)
     # Concatenating the results of the segments and adding an offset to the segments
     words = []
     timing = [[],[],[]]
     for result in decoding_results:
         words.extend(result[0])
 
+    # for a, b in zip(segments_timing,decoding_results):
+    #     print(f'{a=}')
+    #     print(f'{b[1][1]=}')
+    #     print(f'{b[1][2]=}')
+    # TODO Linear lässt es sich nicht lösen. Mit jedem Segment muss der Offset erhöht werden
+    # correction_factor = (3000 - (len(segments_filenames) * 10 / 33))
     for result, offset in zip(decoding_results, segments_timing):
-        timing[0].extend(result[1][0])
-        start = map(lambda x: x + (offset[0] / 3), result[1][1])
-        timing[1].extend(start)
-        timing[2].extend(result[1][2])
+        if result[1][1]:
+            timing[0].extend(result[1][0])
+            start = map(lambda x: int(x + (offset[0] / 3)), result[1][1])
+            timing[1].extend(start)
+            timing[2].extend(result[1][2])
+    starting = 0
+    temp_timing = [[], [], []]
+    for word, time, length in zip(timing[0], timing[1], timing[2]):
+        temp_timing[0].append(word)
+        temp_timing[1].append(starting)
+        temp_timing[2].append(length)
+        starting = starting + length
+    timing = temp_timing
+    bitchS = timing[1]
+    bitchL = timing[2]
+    for S, L, N in zip(bitchS, bitchL, bitchS[1:]):
+        ressi = S+L-N
+        if ressi != 0:
+            print(ressi)
 
     # Maps words to the numbers
     words = indices_to_symbols(symbols, timing[0])
@@ -244,28 +275,25 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     print(f'{segments_filenames=}')
     print(f'{segments_timing=}')
     # Write scp and spk2utt file
+    
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
-        for segment in segments_filenames:
-            segmentFilename = segment.rpartition('.')[0]
-            wavscp.write(f'{segmentFilename} {segment}\n')
-            spk2utt.write(f'{filenameS_hash} {segmentFilename}\n')
+        # segmentFilename = wav_filename.rpartition('.')[0]
+        wavscp.write(f'{filenameS_hash} {wav_filename}\n')
+        spk2utt.write(f'{filenameS_hash} {filenameS_hash}\n')    
+    
+    # with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
+    #     for segment in segments_filenames:
+    #         segmentFilename = segment.rpartition('.')[0]
+    #         wavscp.write(f'{segmentFilename} {segment}\n')
+    #         spk2utt.write(f'{filenameS_hash} {segmentFilename}\n')
 
     # Decode wav files
     status.publish_status('Start ASR.')
-    try:
-        vtt, did_decode, words = Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing)
-        if did_decode:
-            status.publish_status('ASR finished.')
-        else:
-            status.publish_status('ASR error.')
-            sys.exit(-1)
-
-    except KeyboardInterrupt:
-        status.publish_status('Decoding aborted. Ctrl-C pressed')
-        sys.exit(-1)
-    except Exception as e:
-        status.publish_status('Decoding failed.')
-        status.publish_status(f'Complete Errormessage: {e}')
+    vtt, did_decode, words = Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale)
+    if did_decode:
+        status.publish_status('ASR finished.')
+    else:
+        status.publish_status('ASR error.')
         sys.exit(-1)
 
     # Cleanup tmp files
