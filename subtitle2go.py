@@ -47,6 +47,8 @@ import sys
 
 start_time = time.time()
 
+kaldi_feature_factor = 3.00151874884282680911
+
 class output_status():
     def __init__(self, filename, filenameS_hash, redis=False):
         if redis:
@@ -196,8 +198,10 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
                 else:
                     lat = out['lattice']
                 best_path = functions.compact_lattice_shortest_path(lat)
+                print(f'{type(best_path)=}')
+                print(f'{type(shortestpath(best_path))=}')
                 words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
-                timing = functions.compact_lattice_to_word_alignment(best_path)
+                timing = functions.compact_lattice_to_word_alignment(shortestpath(best_path))
                 decoding_results.append((words, timing))
                 segmentcounter+=1
     print(decoding_results)
@@ -216,23 +220,23 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     for result, offset in zip(decoding_results, segments_timing):
         if result[1][1]:
             timing[0].extend(result[1][0])
-            start = map(lambda x: int(x + (offset[0] / 3)), result[1][1])
+            start = map(lambda x: int(x + (offset[0] * kaldi_feature_factor)), result[1][1])
             timing[1].extend(start)
             timing[2].extend(result[1][2])
     starting = 0
     temp_timing = [[], [], []]
-    for word, time, length in zip(timing[0], timing[1], timing[2]):
-        temp_timing[0].append(word)
-        temp_timing[1].append(starting)
-        temp_timing[2].append(length)
-        starting = starting + length
-    timing = temp_timing
-    bitchS = timing[1]
-    bitchL = timing[2]
-    for S, L, N in zip(bitchS, bitchL, bitchS[1:]):
-        ressi = S+L-N
-        if ressi != 0:
-            print(ressi)
+    # for word, time, length in zip(timing[0], timing[1], timing[2]):
+    #     temp_timing[0].append(word)
+    #     temp_timing[1].append(starting)
+    #     temp_timing[2].append(length)
+    #     starting = starting + length
+    # timing = temp_timing
+    # bitchS = timing[1]
+    # bitchL = timing[2]
+    # for S, L, N in zip(bitchS, bitchL, bitchS[1:]):
+    #     ressi = S+L-N
+    #     if ressi != 0:
+    #         print(ressi)
 
     # Maps words to the numbers
     words = indices_to_symbols(symbols, timing[0])
@@ -297,16 +301,16 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         sys.exit(-1)
 
     # Cleanup tmp files
-    try:
-        os.remove(scp_filename)
-        os.remove(wav_filename)
-        os.remove(spk2utt_filename)
-        for segment_file in segments_filenames:
-            os.remove(segment_file)
-        status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
-    except Exception as e:
-        status.publish_status(f'Removing files failed')
-        status.publish_status(f'Complete Errormessage: {e}')
+    # try:
+    #     os.remove(scp_filename)
+    #     os.remove(wav_filename)
+    #     os.remove(spk2utt_filename)
+    #     for segment_file in segments_filenames:
+    #         os.remove(segment_file)
+    #     status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
+    # except Exception as e:
+    #     status.publish_status(f'Removing files failed')
+    #     status.publish_status(f'Complete Errormessage: {e}')
 
     status.publish_status('VTT finished.')
 
@@ -429,8 +433,10 @@ def create_subtitle(sequences, subtitle_format, filenameS):
 
         sequence_counter = 1
         for a in sequences:
-            start_seconds = a[1] / 33.333 # Start of sequence in seconds
-            end_seconds = a[2] / 33.333 # End of sequence in seconds
+            # start_seconds = a[1] / 33.333 # Start of sequence in seconds
+            start_seconds = a[1] * kaldi_feature_factor / 100 # Start of sequence in seconds
+            # end_seconds = a[2] / 33.333 # End of sequence in seconds
+            end_seconds = a[2] * kaldi_feature_factor / 100 # End of sequence in seconds
             file.write(str(sequence_counter) + '\n')  # number of actual sequence
 
             time_start =    (f'{int(start_seconds / 3600):02}:'
