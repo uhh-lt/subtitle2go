@@ -444,6 +444,8 @@ def create_subtitle(sequences, subtitle_format, filenameS):
                             f'{int(start_seconds % 60):02}'
                             f'{separator}'
                             f'{int(start_seconds * 1000 % 1000):03}')
+            time_start = kaldi_time_to_seconds(a[1], separator)
+            time_end = kaldi_time_to_seconds(a[2], separator)
 
             time_end =    (f'{int(end_seconds / 3600):02}:'
                             f'{int(end_seconds / 60 % 60):02}:'
