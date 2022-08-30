@@ -248,6 +248,8 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     words = indices_to_symbols(symbols, timing[0])
 
     # Creates the datastructure (Word, begin(Frames), end(Frames))
+    assert(len(words) == len(timing[1]))
+    assert(len(timing[1]) == len(timing[2]))
     vtt = list(map(list, zip(words, timing[1], timing[2])))
 
     return vtt, did_decode, words
