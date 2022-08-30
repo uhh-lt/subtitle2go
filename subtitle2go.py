@@ -115,8 +115,6 @@ def recognizer(decoder_yaml_opts, models_dir):
 def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale):
 
     models_dir = 'models/'
-    scp_filename = 'tmp/5cb74585a8c0b6a.scp'
-    spk2utt_filename = 'tmp/5cb74585a8c0b6a_spk2utt'
 
     # Read yaml File
     with open(config_file, 'r') as stream:
