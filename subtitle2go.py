@@ -220,7 +220,13 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     for result, offset in zip(decoding_results, segments_timing):
         if result[1][1]:
             timing[0].extend(result[1][0])
-            start = map(lambda x: int(x + (offset[0] * kaldi_feature_factor)), result[1][1])
+            # start = map(lambda x: int(x + (offset[0] / kaldi_feature_factor)), result[1][1])
+            start = [x + (offset[0] / kaldi_feature_factor) for x in result[1][1]]
+            print('offset')
+            kaldi_time_to_seconds(offset[0] / kaldi_feature_factor, seperator=".")
+            print('start')
+            kaldi_time_to_seconds(start[0], seperator=".")
+
             timing[1].extend(start)
             timing[2].extend(result[1][2])
     starting = 0
@@ -369,6 +375,17 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     return vtt_punc
 
 
+def kaldi_time_to_seconds(value, seperator):
+    time = value * kaldi_feature_factor / 100
+    print(f'{time=}')
+    time_start =    (f'{int(time / 3600):02}:'
+                            f'{int(time / 60 % 60):02}:'
+                            f'{int(time % 60):02}'
+                            f'{seperator}'
+                            f'{int(time * 1000 % 1000):03}')
+    print(f'{time_start=}')
+    return time_start
+
 # This creates a segmentation for the subtitles and make sure it can still be mapped to the Kaldi tokenisation
 def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor, comma_end_reward_factor,
                  sentence_end_reward_factor):
@@ -433,25 +450,25 @@ def create_subtitle(sequences, subtitle_format, filenameS):
 
         sequence_counter = 1
         for a in sequences:
-            # start_seconds = a[1] / 33.333 # Start of sequence in seconds
-            start_seconds = a[1] * kaldi_feature_factor / 100 # Start of sequence in seconds
-            # end_seconds = a[2] / 33.333 # End of sequence in seconds
-            end_seconds = a[2] * kaldi_feature_factor / 100 # End of sequence in seconds
-            file.write(str(sequence_counter) + '\n')  # number of actual sequence
-
-            time_start =    (f'{int(start_seconds / 3600):02}:'
-                            f'{int(start_seconds / 60 % 60):02}:'
-                            f'{int(start_seconds % 60):02}'
-                            f'{separator}'
-                            f'{int(start_seconds * 1000 % 1000):03}')
             time_start = kaldi_time_to_seconds(a[1], separator)
             time_end = kaldi_time_to_seconds(a[2], separator)
+            # start_seconds = a[1] / 33.333 # Start of sequence in seconds
+            # start_seconds = a[1] * kaldi_feature_factor / 100 # Start of sequence in seconds
+            # end_seconds = a[2] / 33.333 # End of sequence in seconds
+            # end_seconds = a[2] * kaldi_feature_factor / 100 # End of sequence in seconds
+            file.write(str(sequence_counter) + '\n')  # number of actual sequence
 
-            time_end =    (f'{int(end_seconds / 3600):02}:'
-                            f'{int(end_seconds / 60 % 60):02}:'
-                            f'{int(end_seconds % 60):02}'
-                            f'{separator}'
-                            f'{int(end_seconds * 1000 % 1000):03}')
+            # time_start =    (f'{int(start_seconds / 3600):02}:'
+            #                 f'{int(start_seconds / 60 % 60):02}:'
+            #                 f'{int(start_seconds % 60):02}'
+            #                 f'{separator}'
+            #                 f'{int(start_seconds * 1000 % 1000):03}')
+
+            # time_end =    (f'{int(end_seconds / 3600):02}:'
+            #                 f'{int(end_seconds / 60 % 60):02}:'
+            #                 f'{int(end_seconds % 60):02}'
+            #                 f'{separator}'
+            #                 f'{int(end_seconds * 1000 % 1000):03}')
 
             timestring = time_start + ' --> ' + time_end + '\n'
             file.write(timestring)
