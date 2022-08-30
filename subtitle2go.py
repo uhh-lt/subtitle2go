@@ -252,6 +252,11 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     assert(len(timing[1]) == len(timing[2]))
     vtt = list(map(list, zip(words, timing[1], timing[2])))
 
+    if debug_word_timing:
+        with open('debug_output.txt', 'w') as f:
+            for element in vtt:
+                f.write(f'{element[1]} {kaldi_time_to_seconds(element[1], ".")} {kaldi_time_to_seconds(element[1] + element[2], ".")} {element[2]} {element[0]}\n')
+
     return vtt, did_decode, words
 
 # This is the asr function that converts the videofile, split the video into segments and decodes
@@ -539,6 +544,8 @@ if __name__ == '__main__':
     parser.add_argument('--with-redis-updates', help='Update a redis instance about the current progress.',
                         action='store_true', default=False)
 
+    parser.add_argument('--debug', help='Output debug timing information', default=False)
+
     # Positional argument, without (- and --)
     parser.add_argument('filename', help='The path of the mediafile', type=str)
 
@@ -548,6 +555,7 @@ if __name__ == '__main__':
     subtitle_format = args.subtitle
     pdf_path = args.pdf
     model_kaldi = args.model_yaml
+    debug_word_timing = args.debug
 
     filenameS_hash = hex(abs(hash(filenameS)))[2:]
     ensure_dir('tmp/')
