@@ -112,7 +112,7 @@ def recognizer(decoder_yaml_opts, models_dir):
     return fr
 
 # This method contains all Kaldi related calls and methods
-def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale):
+def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale):
 
     models_dir = 'models/'
 
@@ -133,7 +133,7 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
     # Construct symbol table
     symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts['word-syms'])
     # phi_label = symbols.find_index('#0')
-    segments_filename = f'{scp_filename.partition(".scp")[0]}_segments'
+#    segments_filename = f'{scp_filename.partition(".scp")[0]}_segments'
     # Define feature pipelines as Kaldi rspecifiers
     # feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
     feats_rspec = (f'ark:extract-segments scp,p:{scp_filename} {segments_filename} ark:- | compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} ark:- ark:- |')
@@ -264,6 +264,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     print(f"{filenameS_hash=}")
 
     scp_filename = f'tmp/{filenameS_hash}.scp'
+    segments_filename = f'tmp/{filenameS_hash}_segments'
     wav_filename = f'tmp/{filenameS_hash}.wav'
     spk2utt_filename = f'tmp/{filenameS_hash}_spk2utt'
 
@@ -307,7 +308,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
     # Decode wav files
     status.publish_status('Start ASR.')
-    vtt, did_decode, words = Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale)
+    vtt, did_decode, words = Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn_rescore, segments_timing, lm_scale, acoustic_scale)
     if did_decode:
         status.publish_status('ASR finished.')
     else:
