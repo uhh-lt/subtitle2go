@@ -34,7 +34,7 @@ from kaldi.transform import cmvn
 from simple_endpointing import process_wav
 
 # Interpunctuation
-from rpunct.rpunct import RestorePuncts
+from rpunct import RestorePuncts
 
 import yaml
 import argparse
@@ -263,6 +263,8 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, do_rnn_rescore, segments_
 def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic_scale=1.0, lm_scale=0.5,
          do_rnn_rescore=False, config_file='models/kaldi_tuda_de_nnet3_chain2_de_722k.yaml'):
 
+    print(f"{filenameS_hash=}")
+
     scp_filename = f'tmp/{filenameS_hash}.scp'
     wav_filename = f'tmp/{filenameS_hash}.wav'
     spk2utt_filename = f'tmp/{filenameS_hash}_spk2utt'
@@ -296,7 +298,8 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
         # segmentFilename = wav_filename.rpartition('.')[0]
         wavscp.write(f'{filenameS_hash} {wav_filename}\n')
-        spk2utt.write(f'{filenameS_hash} {filenameS_hash}\n')    
+        spk2utt.write(f'{filenameS_hash} {filenameS_hash}\n')
+        print(f'Wrote {wavscp=} and {spk2utt=}') 
     
     # with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
     #     for segment in segments_filenames:
@@ -345,7 +348,7 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
 
     # BERT
     text = str(' '.join(words))
-    rpunct = RestorePuncts(model='interpunct_de_rpunct')
+    rpunct = RestorePuncts(model='models/interpunct_de_rpunct')
     
     punct = rpunct.punctuate(text)
     punct = punct.replace('.', '. ').replace(',', ', ').replace('!', '! ').replace('?', '? ')
