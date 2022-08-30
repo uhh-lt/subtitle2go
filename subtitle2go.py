@@ -344,13 +344,17 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     # raw_file.close()
 
     # BERT
-    text = ' '.join(words)
+    text = str(' '.join(words))
     rpunct = RestorePuncts(model='interpunct_de_rpunct')
     
     punct = rpunct.punctuate(text)
-
+    punct = punct.replace('.', '. ').replace(',', ', ').replace('!', '! ').replace('?', '? ')
+    punct = punct.replace('  ', ' ')
     punct_list = punct.split(' ')
-
+    punct_list = words
+    print(f'{len(punct_list)=}')
+    print(f'{len(words)=}')
+    print(f'{len(vtt)=}')
     # Starts Punctuator2 to add interpunctuation
     # os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
     
