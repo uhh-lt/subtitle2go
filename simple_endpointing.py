@@ -108,7 +108,8 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*4,
     for a in segments:
         start = a[0]/100
         end = a[1]/100
-        text += f'{filenameRS}_{count} {filenameRS} {start} {end}\n'
+        count_str = "%.4d" % count
+        text += f'{filenameRS}_{count_str} {filenameRS} {start} {end}\n'
         count+=1
     with open(segmentsFN, 'w') as f:
         f.write(text)
