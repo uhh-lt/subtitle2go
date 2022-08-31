@@ -461,23 +461,8 @@ def create_subtitle(sequences, subtitle_format, filenameS):
         for a in sequences:
             time_start = kaldi_time_to_seconds(a[1], separator)
             time_end = kaldi_time_to_seconds(a[2], separator)
-            # start_seconds = a[1] / 33.333 # Start of sequence in seconds
-            # start_seconds = a[1] * kaldi_feature_factor / 100 # Start of sequence in seconds
-            # end_seconds = a[2] / 33.333 # End of sequence in seconds
-            # end_seconds = a[2] * kaldi_feature_factor / 100 # End of sequence in seconds
+
             file.write(str(sequence_counter) + '\n')  # number of actual sequence
-
-            # time_start =    (f'{int(start_seconds / 3600):02}:'
-            #                 f'{int(start_seconds / 60 % 60):02}:'
-            #                 f'{int(start_seconds % 60):02}'
-            #                 f'{separator}'
-            #                 f'{int(start_seconds * 1000 % 1000):03}')
-
-            # time_end =    (f'{int(end_seconds / 3600):02}:'
-            #                 f'{int(end_seconds / 60 % 60):02}:'
-            #                 f'{int(end_seconds % 60):02}'
-            #                 f'{separator}'
-            #                 f'{int(end_seconds * 1000 % 1000):03}')
 
             timestring = time_start + ' --> ' + time_end + '\n'
             file.write(timestring)
