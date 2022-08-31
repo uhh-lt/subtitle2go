@@ -66,7 +66,7 @@ class output_status():
         self.fn_short_hash = fn_short_hash
 
     def publish_status(self, status):
-        print(f'{filename=} {filenameS_hash=} {status=}')
+        print(f'{filename=} {self.fn_short_hash=} {status=}')
         if self.redis:
             self.red.publish(self.redis_server_channel, json.dumps({'pid': os.getpid(), 'time': time.time(), 'start_time': start_time,
                                                     'file_id': self.fn_short_hash, 'filename': self.filename,
@@ -563,7 +563,7 @@ if __name__ == '__main__':
     ensure_dir('tmp/')
 
     # Init status class
-    status = output_status(redis=args.with_redis_updates, filename=filename, filenameS_hash=filenameS_hash)
+    status = output_status(redis=args.with_redis_updates, filename=filename, fn_short_hash=filenameS_hash)
 
     # Language selection
     language = args.language
