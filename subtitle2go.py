@@ -94,11 +94,7 @@ def recognizer(decoder_yaml_opts, models_dir):
     decoder_opts.beam = decoder_yaml_opts['beam']
     decoder_opts.max_active = decoder_yaml_opts['max-active']
     decoder_opts.lattice_beam = decoder_yaml_opts['lattice-beam']
-    
-    # Increase determinzation memory
-    # for long files we would otherwise get warnings like this: 
-    # 'Did not reach requested beam in determinize-lattice: size exceeds maximum 50000000 bytes'
-    # decoder_opts.det_opts.max_mem = 2100000000 #2.1gb, value has to be a 32 bit signed integer
+
     decodable_opts = NnetSimpleComputationOptions()
     decodable_opts.acoustic_scale = decoder_yaml_opts['acoustic-scale']
     decodable_opts.frame_subsampling_factor = 3 # decoder_yaml_opts['frame-subsampling-factor'] # 3
@@ -108,7 +104,7 @@ def recognizer(decoder_yaml_opts, models_dir):
         models_dir + decoder_yaml_opts['fst'],
         models_dir + decoder_yaml_opts['word-syms'],
         decoder_opts=decoder_opts, decodable_opts=decodable_opts)
-    
+
     return fr
 
 # This method contains all Kaldi related calls and methods
@@ -337,16 +333,8 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
 # Adds interpunctuation to the Kaldi output
 def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
-    # raw_filename = f'tmp/{filenameS_hash}_raw.txt'
-    # token_filename = f'tmp/{filenameS_hash}_token.txt'
-    # readable_filename = f'tmp/{filenameS_hash}_readable.txt'
-   
-    status.publish_status('Starting interpunctuation.')
 
-    # Input file for Punctuator2
-    # raw_file = open(raw_filename, 'w')
-    # raw_file.write(' '.join(words))
-    # raw_file.close()
+    status.publish_status('Starting interpunctuation.')
 
     # BERT
     text = str(' '.join(words))
@@ -360,15 +348,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     print(f'{len(punct_list)=}')
     print(f'{len(words)=}')
     print(f'{len(vtt)=}')
-    # Starts Punctuator2 to add interpunctuation
-    # os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
-    
-    # try:
-    #     file_punct = open(readable_filename, 'r')
-    # except:
-    #     print('Running punctuator failed. Exiting.')
-    #     status.publish_status('Adding interpunctuation failed.')
-    #     sys.exit(-2)
 
     # punct_list = file_punct.read().split(' ')
     vtt_punc = []
@@ -377,14 +356,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
             vtt_punc.append([a, b[1], b[2]])
         else:
             vtt_punc.append(b)
-    
-    # Cleanup tmp files
-    # print(f'removing tmp file:{raw_filename}')
-    # os.remove(raw_filename)
-    # print(f'removing tmp file:{token_filename}')
-    # os.remove(token_filename)
-    # print(f'removing tmp file:{readable_filename}')
-    # os.remove(readable_filename)
 
     status.publish_status('Adding interpunctuation finished.')
 
@@ -468,23 +439,8 @@ def create_subtitle(sequences, subtitle_format, filenameS):
         for a in sequences:
             time_start = kaldi_time_to_seconds(a[1], separator)
             time_end = kaldi_time_to_seconds(a[2], separator)
-            # start_seconds = a[1] / 33.333 # Start of sequence in seconds
-            # start_seconds = a[1] * kaldi_feature_factor / 100 # Start of sequence in seconds
-            # end_seconds = a[2] / 33.333 # End of sequence in seconds
-            # end_seconds = a[2] * kaldi_feature_factor / 100 # End of sequence in seconds
+
             file.write(str(sequence_counter) + '\n')  # number of actual sequence
-
-            # time_start =    (f'{int(start_seconds / 3600):02}:'
-            #                 f'{int(start_seconds / 60 % 60):02}:'
-            #                 f'{int(start_seconds % 60):02}'
-            #                 f'{separator}'
-            #                 f'{int(start_seconds * 1000 % 1000):03}')
-
-            # time_end =    (f'{int(end_seconds / 3600):02}:'
-            #                 f'{int(end_seconds / 60 % 60):02}:'
-            #                 f'{int(end_seconds % 60):02}'
-            #                 f'{separator}'
-            #                 f'{int(end_seconds * 1000 % 1000):03}')
 
             timestring = time_start + ' --> ' + time_end + '\n'
             file.write(timestring)
