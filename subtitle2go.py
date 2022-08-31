@@ -297,7 +297,10 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
         # segmentFilename = wav_filename.rpartition('.')[0]
         wavscp.write(f'{filenameS_hash} {wav_filename}\n')
-        spk2utt.write(f'{filenameS_hash} {filenameS_hash}\n')
+
+        for i in range(len(segments_timing)):
+            count_str = "%.4d" % i    
+            spk2utt.write(f'{filenameS_hash}_{count_str} {filenameS_hash}\n')
         print(f'Wrote {wavscp=} and {spk2utt=}') 
     
     # with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
