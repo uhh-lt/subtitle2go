@@ -50,12 +50,12 @@ start_time = time.time()
 kaldi_feature_factor = 3.00151874884282680911
 
 class output_status():
-    def __init__(self, filename, filenameS_hash, redis=False):
+    def __init__(self, filename, fn_short_hash, redis=False):
         if redis:
             try:
                 import redis
                 self.red = redis.StrictRedis(charset='utf-8', decode_responses=True)
-            except:
+            except ImportError:
                 print('Redis is not available. Disabling redis option.')
                 redis = False
 
@@ -63,13 +63,13 @@ class output_status():
         self.redis = redis
 
         self.filename = filename
-        self.filenameS_hash = filenameS_hash
+        self.fn_short_hash = fn_short_hash
 
     def publish_status(self, status):
         print(f'{filename=} {filenameS_hash=} {status=}')
         if self.redis:
             self.red.publish(self.redis_server_channel, json.dumps({'pid': os.getpid(), 'time': time.time(), 'start_time': start_time,
-                                                    'file_id': self.filenameS_hash, 'filename': self.filename,
+                                                    'file_id': self.fn_short_hash, 'filename': self.filename,
                                                     'status': status}))
 
 # Make sure a fpath directory exists
