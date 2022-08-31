@@ -94,11 +94,7 @@ def recognizer(decoder_yaml_opts, models_dir):
     decoder_opts.beam = decoder_yaml_opts['beam']
     decoder_opts.max_active = decoder_yaml_opts['max-active']
     decoder_opts.lattice_beam = decoder_yaml_opts['lattice-beam']
-    
-    # Increase determinzation memory
-    # for long files we would otherwise get warnings like this: 
-    # 'Did not reach requested beam in determinize-lattice: size exceeds maximum 50000000 bytes'
-    # decoder_opts.det_opts.max_mem = 2100000000 #2.1gb, value has to be a 32 bit signed integer
+
     decodable_opts = NnetSimpleComputationOptions()
     decodable_opts.acoustic_scale = decoder_yaml_opts['acoustic-scale']
     decodable_opts.frame_subsampling_factor = 3 # decoder_yaml_opts['frame-subsampling-factor'] # 3
@@ -108,7 +104,7 @@ def recognizer(decoder_yaml_opts, models_dir):
         models_dir + decoder_yaml_opts['fst'],
         models_dir + decoder_yaml_opts['word-syms'],
         decoder_opts=decoder_opts, decodable_opts=decodable_opts)
-    
+
     return fr
 
 # This method contains all Kaldi related calls and methods
