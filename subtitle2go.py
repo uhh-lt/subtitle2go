@@ -330,16 +330,8 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
 # Adds interpunctuation to the Kaldi output
 def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
-    # raw_filename = f'tmp/{filenameS_hash}_raw.txt'
-    # token_filename = f'tmp/{filenameS_hash}_token.txt'
-    # readable_filename = f'tmp/{filenameS_hash}_readable.txt'
-   
-    status.publish_status('Starting interpunctuation.')
 
-    # Input file for Punctuator2
-    # raw_file = open(raw_filename, 'w')
-    # raw_file.write(' '.join(words))
-    # raw_file.close()
+    status.publish_status('Starting interpunctuation.')
 
     # BERT
     text = str(' '.join(words))
@@ -353,15 +345,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     print(f'{len(punct_list)=}')
     print(f'{len(words)=}')
     print(f'{len(vtt)=}')
-    # Starts Punctuator2 to add interpunctuation
-    # os.system(f'./punctuator.sh {raw_filename} {model_punctuation} {token_filename} {readable_filename}')
-    
-    # try:
-    #     file_punct = open(readable_filename, 'r')
-    # except:
-    #     print('Running punctuator failed. Exiting.')
-    #     status.publish_status('Adding interpunctuation failed.')
-    #     sys.exit(-2)
 
     # punct_list = file_punct.read().split(' ')
     vtt_punc = []
@@ -370,14 +353,6 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
             vtt_punc.append([a, b[1], b[2]])
         else:
             vtt_punc.append(b)
-    
-    # Cleanup tmp files
-    # print(f'removing tmp file:{raw_filename}')
-    # os.remove(raw_filename)
-    # print(f'removing tmp file:{token_filename}')
-    # os.remove(token_filename)
-    # print(f'removing tmp file:{readable_filename}')
-    # os.remove(readable_filename)
 
     status.publish_status('Adding interpunctuation finished.')
 
