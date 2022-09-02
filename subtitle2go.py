@@ -185,13 +185,11 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
                 else:
                     lat = out['lattice']
                 best_path = functions.compact_lattice_shortest_path(lat)
-                print(f'{type(best_path)=}')
-                print(f'{type(shortestpath(best_path))=}')
                 words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
                 timing = functions.compact_lattice_to_word_alignment(best_path)
                 decoding_results.append((words, timing))
                 segmentcounter+=1
-    print(decoding_results)
+
     # Concatenating the results of the segments and adding an offset to the segments
     words = []
     timing = [[],[],[]]
@@ -203,9 +201,7 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
             timing[0].extend(result[1][0])
             # start = map(lambda x: int(x + (offset[0] / kaldi_feature_factor)), result[1][1])
             start = [x + (offset[0] / kaldi_feature_factor) for x in result[1][1]]
-            print('offset')
             kaldi_time_to_seconds(offset[0] / kaldi_feature_factor, seperator=".")
-            print('start')
             kaldi_time_to_seconds(start[0], seperator=".")
 
             timing[1].extend(start)
@@ -260,9 +256,6 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         status.publish_status('Audio segmentation failed.')
         status.publish_status(f'Complete Errormessage: {e}')
         sys.exit(-1)
-
-    print(f'{segments_filenames=}')
-    print(f'{segments_timing=}')
     
     # Write scp and spk2utt file
     with open(scp_filename, 'w') as wavscp, open(spk2utt_filename, 'w') as spk2utt:
@@ -312,16 +305,11 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     punct = punct.replace('.', '. ').replace(',', ', ').replace('!', '! ').replace('?', '? ')
     punct = punct.replace('  ', ' ')
     punct_list = punct.split(' ')
-#    punct_list = words
-    print(f'{len(punct_list)=}')
-    print(f'{len(words)=}')
-    print(f'{len(vtt)=}')
 
     # punct_list = file_punct.read().split(' ')
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Replaces the adapted words with the (capitalization, period, comma) with the new ones
         vtt_punc.append([a, b[1], b[2]])
-        print(f"{a=}, {b=}")
 
     status.publish_status('Adding interpunctuation finished.')
 
@@ -330,13 +318,11 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
 
 def kaldi_time_to_seconds(value, seperator):
     time = value * kaldi_feature_factor / 100
-    print(f'{time=}')
     time_start =    (f'{int(time / 3600):02}:'
                             f'{int(time / 60 % 60):02}:'
                             f'{int(time % 60):02}'
                             f'{seperator}'
                             f'{int(time * 1000 % 1000):03}')
-    print(f'{time_start=}')
     return time_start
 
 # This creates a segmentation for the subtitles and make sure it can still be mapped to the Kaldi tokenisation
@@ -358,7 +344,6 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
                                                sentence_end_reward_factor=sentence_end_reward_factor,
                                                comma_end_reward_factor=comma_end_reward_factor)
     
-    print(segments)
 
     temp_segments = []
     temp_segments.append(segments[0])
