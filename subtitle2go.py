@@ -242,7 +242,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         preprocess_audio(filename, wav_filename)
     except ffmpeg.Error as e:
         status.publish_status('Audio extraction failed.')
-        status.publish_status(f'Complete Errormessage: {e.stderr}')
+        status.publish_status(f'Error message is: {e.stderr}')
         sys.exit(-1)
 
     status.publish_status('Audio extracted.')
@@ -254,7 +254,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         segments_filenames, segments_timing = process_wav(wav_filename)
     except Exception as e:
         status.publish_status('Audio segmentation failed.')
-        status.publish_status(f'Complete Errormessage: {e}')
+        status.publish_status(f'Error message is: {e}')
         sys.exit(-1)
     
     # Write scp and spk2utt file
@@ -280,12 +280,11 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         os.remove(scp_filename)
         os.remove(wav_filename)
         os.remove(spk2utt_filename)
-        for segment_file in segments_filenames:
-            os.remove(segment_file)
-        status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
+        os.remove(segments_filename)
+        status.publish_status(f'Removed temporary files: {scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filename=}')
     except Exception as e:
-        status.publish_status(f'Removing files failed')
-        status.publish_status(f'Complete Errormessage: {e}')
+        status.publish_status(f'Removing files failed.')
+        status.publish_status(f'Error message is: {e}')
 
     status.publish_status('VTT finished.')
 
@@ -407,7 +406,7 @@ def create_subtitle(sequences, subtitle_format, filenameS):
 
     except Exception as e:
         status.publish_status('Creating subtitle failed.')
-        status.publish_status(f'Complete Errormessage: {e}')
+        status.publish_status(f'error message is: {e}')
         sys.exit(-1)
 
     status.publish_status('Finished creating subtitle.')
