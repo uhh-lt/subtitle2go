@@ -4,13 +4,19 @@ Subtitle2go is a fully automatic solution for German video subtitling, currently
 
 Our German Kaldi models are based on the [kaldi-tuda-de](https://github.com/uhh-lt/kaldi-tuda-de) TDNN-HMM recipe. This is a Large Vocabulary Continuous Speech Recognition (LVCSR) model trained on about 1700h of German speech data.
 
-[Punctuator2](https://github.com/ottokart/punctuator2) is used for punctuation reconstruction (,.?!)
+[rpunct](https://github.com/Felflare/rpunct) is used for punctuation reconstruction (,.?!)
 
 Subtitle2go uses a custom solution for segmentation, with a beam search segmentation algorithm that searches for the best "segmentation path" with user specified criteria such as average length and variance. Punctuation and distances in parsing trees are used to estimate splitting costs.
 
 ![Subtitle2Go Pipeline](Pipeline.png)
 
 ## News
+
+### 02.09.2022
+
+Lots of imrovements to the German model, punctuation reconstruction (we now use rpunct instead of punctuator2) and a preliminary English model were added.
+
+Robert Geislinger is presenting the improvments at [Konvens2022](https://konvens2022.uni-potsdam.de/?page_id=65)!
 
 ### 01.11.2021
 
