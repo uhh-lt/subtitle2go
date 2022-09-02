@@ -14,9 +14,9 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 
 ### 02.09.2022
 
-Lots of imrovements to the German model, punctuation reconstruction (we now use rpunct instead of punctuator2) and a preliminary English model were added.
++ Lots of imrovements to the German model, punctuation reconstruction (we now use rpunct instead of punctuator2) and a preliminary English model were added.
 
-Robert Geislinger is presenting the improvments at [Konvens2022](https://konvens2022.uni-potsdam.de/?page_id=65)!
++ Robert Geislinger is presenting the improvments at [Konvens2022](https://konvens2022.uni-potsdam.de/?page_id=65)!
 
 ### 01.11.2021
 
