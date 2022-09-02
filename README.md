@@ -64,13 +64,9 @@ python3 -m spacy download en_core_web_lg
 # OR if you have a non-Intel CPU:
 ./install_kaldi.sh ~/projects/subtitle2go/subtitle2go_env/bin/python3
 
-# Install rpunct
-git clone https://github.com/Alienmaster/rpunct
-pip3 install -r rpunct/requirements.txt
+# Download and extract models
+./download_models.sh
 
-# Download Model
-wget http://ltdata1.informatik.uni-hamburg.de/subtitle2go/interpunct_de_rpunct.tar.gz
-tar xfvz interpunct_de_rpunct.tar.gz
 ```
 
 ## Optional: redis status updates

@@ -27,13 +27,13 @@ import audiosegment
 import numpy as np
 
 # All timing are in frames, where one frame is 0.01 seconds.
-def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*3,
+def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*4,
                 max_lookahead=100*180, min_len=1000*2, step=10, len_reward = 40, debug=False):
 
     samplerate, data = wavfile.read(wav_filename, mmap=False)
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
     fbank_feat_power = fbank_feat.sum(axis=-1) / 10.
-
+    
     fbank_feat_len = len(fbank_feat)
 
     fbank_feat_min_power = min(fbank_feat_power)
@@ -99,6 +99,21 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*3,
     
     # Write wave segments
     filenameS = wav_filename.rpartition('.')[0] # Filename without file extension
+    filenameRS = filenameS.partition('/')[2]
+    
+    text = ""
+    count = 0
+    segmentsFN = f'{filenameS}_segments'
+    for a in segments:
+        start = a[0]/100
+        end = a[1]/100
+        count_str = "%.4d" % count
+        text += f'{filenameRS}_{count_str} {filenameRS} {start} {end}\n'
+        count+=1
+    with open(segmentsFN, 'w') as f:
+        f.write(text)
+    return segmentsFN, segments
+    
     
     filename_list = []
     segment_count = 0
@@ -153,4 +168,3 @@ if __name__ == '__main__':
     )
 
     result = process_wav(tmp_file, debug=False)
-    print(result)
