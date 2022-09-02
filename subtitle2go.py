@@ -344,7 +344,7 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     punct = punct.replace('.', '. ').replace(',', ', ').replace('!', '! ').replace('?', '? ')
     punct = punct.replace('  ', ' ')
     punct_list = punct.split(' ')
-    punct_list = words
+#    punct_list = words
     print(f'{len(punct_list)=}')
     print(f'{len(words)=}')
     print(f'{len(vtt)=}')
@@ -352,10 +352,8 @@ def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
     # punct_list = file_punct.read().split(' ')
     vtt_punc = []
     for a, b in zip(punct_list, vtt):  # Replaces the adapted words with the (capitalization, period, comma) with the new ones
-        if a != b[0]:
-            vtt_punc.append([a, b[1], b[2]])
-        else:
-            vtt_punc.append(b)
+        vtt_punc.append([a, b[1], b[2]])
+        print(f"{a=}, {b=}")
 
     status.publish_status('Adding interpunctuation finished.')
 
@@ -392,17 +390,23 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
                                                sentence_end_reward_factor=sentence_end_reward_factor,
                                                comma_end_reward_factor=comma_end_reward_factor)
     
+    print(segments)
+
     temp_segments = []
     temp_segments.append(segments[0])
+
+
     # Corrects punctuation marks and also lost tokens when they are slipped
     # to the beginning of the next line
     for current in segments[1:]:
         currentL = current.split(' ')
-        if any(token in currentL[0] for token in (',', '.', "'s", "n't")):
+        if any(token in currentL[0][0] for token in (',', '.', '?', '!', "'s", "n't", "'re")):
             temp_segments[-1] += currentL[0]
             currentL = currentL[1:]
         temp_segments.append(' '.join(currentL))
     segments = temp_segments
+
+
     # Cuts the segments in words, removes empty objects and
     # and creates the sequences object
     for segment in segments:
