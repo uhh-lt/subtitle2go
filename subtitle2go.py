@@ -128,16 +128,9 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
 
     # Construct symbol table
     symbols = SymbolTable.read_text(models_dir + decoder_yaml_opts['word-syms'])
-    # phi_label = symbols.find_index('#0')
-#    segments_filename = f'{scp_filename.partition(".scp")[0]}_segments'
+    
     # Define feature pipelines as Kaldi rspecifiers
-    # feats_rspec = (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} scp:{scp_filename} ark:- |')
     feats_rspec = (f'ark:extract-segments scp,p:{scp_filename} {segments_filename} ark:- | compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} ark:- ark:- |')
-    # ivectors_rspec = (
-    #         (f'ark:compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
-    #         f'scp:{scp_filename} ark:- | '
-    #         f'ivector-extract-online2 --config={models_dir}{decoder_yaml_opts["ivector-extraction-config"]} '
-    #         f'ark:{spk2utt_filename} ark:- ark:- |'))
     
     ivectors_rspec = (
             (f'ark:extract-segments scp,p:{scp_filename} {segments_filename} ark:- | compute-mfcc-feats --config={models_dir}{decoder_yaml_opts["mfcc-config"]} '
