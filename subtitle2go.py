@@ -405,11 +405,11 @@ def create_subtitle(sequences, subtitle_format, filenameS):
         file.close()
 
     except Exception as e:
-        status.publish_status('Creating subtitle failed.')
+        status.publish_status('Subtitle creation failed.')
         status.publish_status(f'error message is: {e}')
         sys.exit(-1)
 
-    status.publish_status('Finished creating subtitle.')
+    status.publish_status('Finished subtitle creation.')
 
 if __name__ == '__main__':
     # Argument parser
