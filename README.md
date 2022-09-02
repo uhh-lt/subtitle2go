@@ -1,4 +1,4 @@
-# Subtitle2go - Open Source Automatic Subtitling
++# Subtitle2go - Open Source Automatic Subtitling
 
 Subtitle2go is a fully automatic solution for German video subtitling, currently with a focus on lecture videos. The project uses open source models and scripts for German ASR, automatic punctuation reconstruction and subtitle segmentation. But it should be straight-forward to support other languages as well and PRs are welcome!
 
@@ -20,7 +20,7 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 
 ### 01.11.2021
 
-https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its production system!
++ https://lecture2go.uni-hamburg.de/open-source is using subtitle2go in its production system!
 
 ### 03.03.2021
 + We presented Subtitle2Go at [ESSV2021](http://www.essv.de/essv2021/program/). You can check out our paper [here](http://www.essv.de/essv2021/pdfs/33_milde_v2.pdf) and [here (mirror)](https://www.inf.uni-hamburg.de/en/inst/ab/lt/publications/2021-mildeetal-subtitle.pdf).
