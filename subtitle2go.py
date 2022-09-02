@@ -195,7 +195,7 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
                 print(f'{type(best_path)=}')
                 print(f'{type(shortestpath(best_path))=}')
                 words, _, _ = get_linear_symbol_sequence(shortestpath(best_path))
-                timing = functions.compact_lattice_to_word_alignment(shortestpath(best_path))
+                timing = functions.compact_lattice_to_word_alignment(best_path)
                 decoding_results.append((words, timing))
                 segmentcounter+=1
     print(decoding_results)
