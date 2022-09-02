@@ -272,7 +272,6 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         for i in range(len(segments_timing)):
             count_str = "%.4d" % i    
             spk2utt.write(f'{filenameS_hash} {filenameS_hash}_{count_str}\n')
-        print(f'Wrote {wavscp=} and {spk2utt=}') 
 
     # Decode wav files
     status.publish_status('Start ASR.')
@@ -284,16 +283,16 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         sys.exit(-1)
 
     # Cleanup tmp files
-    # try:
-    #     os.remove(scp_filename)
-    #     os.remove(wav_filename)
-    #     os.remove(spk2utt_filename)
-    #     for segment_file in segments_filenames:
-    #         os.remove(segment_file)
-    #     status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
-    # except Exception as e:
-    #     status.publish_status(f'Removing files failed')
-    #     status.publish_status(f'Complete Errormessage: {e}')
+    try:
+        os.remove(scp_filename)
+        os.remove(wav_filename)
+        os.remove(spk2utt_filename)
+        for segment_file in segments_filenames:
+            os.remove(segment_file)
+        status.publish_status(f'files removed:{scp_filename=}, {wav_filename=}, {spk2utt_filename=}, {segments_filenames=}')
+    except Exception as e:
+        status.publish_status(f'Removing files failed')
+        status.publish_status(f'Complete Errormessage: {e}')
 
     status.publish_status('VTT finished.')
 
