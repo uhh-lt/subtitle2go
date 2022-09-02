@@ -33,8 +33,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*4,
     samplerate, data = wavfile.read(wav_filename, mmap=False)
     fbank_feat = logfbank(data, samplerate=samplerate, winlen=0.025, winstep=0.01)
     fbank_feat_power = fbank_feat.sum(axis=-1) / 10.
-    print(len(fbank_feat))
-    print(len(data))
+    
     fbank_feat_len = len(fbank_feat)
 
     fbank_feat_min_power = min(fbank_feat_power)
@@ -101,7 +100,7 @@ def process_wav(wav_filename, beam_size=10, ideal_segment_len=1000*4,
     # Write wave segments
     filenameS = wav_filename.rpartition('.')[0] # Filename without file extension
     filenameRS = filenameS.partition('/')[2]
-    print(segments)
+    
     text = ""
     count = 0
     segmentsFN = f'{filenameS}_segments'
@@ -169,4 +168,3 @@ if __name__ == '__main__':
     )
 
     result = process_wav(tmp_file, debug=False)
-    print(result)
