@@ -205,12 +205,6 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
     for result in decoding_results:
         words.extend(result[0])
 
-    # for a, b in zip(segments_timing,decoding_results):
-    #     print(f'{a=}')
-    #     print(f'{b[1][1]=}')
-    #     print(f'{b[1][2]=}')
-    # TODO Linear lässt es sich nicht lösen. Mit jedem Segment muss der Offset erhöht werden
-    # correction_factor = (3000 - (len(segments_filenames) * 10 / 33))
     for result, offset in zip(decoding_results, segments_timing):
         if result[1][1]:
             timing[0].extend(result[1][0])
@@ -225,18 +219,6 @@ def Kaldi(config_file, scp_filename, spk2utt_filename, segments_filename, do_rnn
             timing[2].extend(result[1][2])
     starting = 0
     temp_timing = [[], [], []]
-    # for word, time, length in zip(timing[0], timing[1], timing[2]):
-    #     temp_timing[0].append(word)
-    #     temp_timing[1].append(starting)
-    #     temp_timing[2].append(length)
-    #     starting = starting + length
-    # timing = temp_timing
-    # bitchS = timing[1]
-    # bitchL = timing[2]
-    # for S, L, N in zip(bitchS, bitchL, bitchS[1:]):
-    #     ressi = S+L-N
-    #     if ressi != 0:
-    #         print(ressi)
 
     # Maps words to the numbers
     words = indices_to_symbols(symbols, timing[0])
