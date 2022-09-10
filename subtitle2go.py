@@ -292,14 +292,16 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
 
 
 # Adds interpunctuation to the Kaldi output
-def interpunctuation(vtt, words, filenameS_hash, model_punctuation):
+def interpunctuation(vtt, words, filenameS_hash, model_punctuation, uppercase):
 
     status.publish_status('Starting interpunctuation.')
 
     # BERT
     text = str(' '.join(words))
-    rpunct = RestorePuncts(model='models/interpunct_de_rpunct')
-    
+    if uppercase:
+        text = text.lower()
+    rpunct = RestorePuncts(model=model_punctuation)
+
     punct = rpunct.punctuate(text)
     punct = punct.replace('.', '. ').replace(',', ', ').replace('!', '! ').replace('?', '? ')
     punct = punct.replace('  ', ' ')
@@ -492,6 +494,7 @@ if __name__ == '__main__':
             model_kaldi = language_yaml[language]['kaldi']
             model_punctuation = language_yaml[language]['punctuation']
             model_spacy = language_yaml[language]['spacy']
+            uppercase = language_yaml[language]['uppercase']
 
         else:
             print(f'language {language} is not set in languages.yaml . exiting.')
@@ -504,7 +507,7 @@ if __name__ == '__main__':
                      asr_max_active=args.asr_max_active, acoustic_scale=args.acoustic_scale,
                      do_rnn_rescore=args.rnn_rescore, config_file=model_kaldi)
     
-    vtt = interpunctuation(vtt, words, filenameS_hash, model_punctuation)
+    vtt = interpunctuation(vtt, words, filenameS_hash, model_punctuation, uppercase)
 
     sequences = segmentation(vtt, model_spacy, beam_size=args.segment_beam_size, ideal_token_len=args.ideal_token_len,
                              len_reward_factor=args.len_reward_factor,
