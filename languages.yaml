@@ -1,9 +1,11 @@
 de:
   kaldi: models/kaldi_tuda_de_nnet3_chain2_de_900k.yaml
-  punctuation: models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl
+  punctuation: models/interpunct_de_rpunct
   spacy: de_core_news_lg
+  uppercase: FALSE
 
 en:
   kaldi: models/en_200k_nnet3chain_tdnn1f_2048_sp_bi.yaml
-  punctuation: models/Model_subs_norm1_filt_5M_tageschau_euparl_h256_lr0.02.pcl
+  punctuation: models/interpunct_en_rpunct
   spacy: en_core_web_lg
+  uppercase: TRUE
