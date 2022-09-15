@@ -14,7 +14,7 @@ Subtitle2go uses a custom solution for segmentation, with a beam search segmenta
 
 ### 02.09.2022
 
-+ Lots of improvements to the German ASR model, punctuation reconstruction (we now use rpunct instead of punctuator2) and a preliminary English ASR model were added.
++ Lots of improvements to the German ASR model, punctuation reconstruction (we now use rpunct instead of punctuator2) and a preliminary English ASR model were added. See our new [paper](https://aclanthology.org/2022.konvens-1.11/) for more details.
 
 + Robert Geislinger is presenting the improvements at [Konvens2022](https://konvens2022.uni-potsdam.de/?page_id=65)!
 
@@ -195,6 +195,17 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
       pages={128--134},
       address={Virtual Berlin, Germany}
     }
+    
+optionally also [this paper](https://aclanthology.org/2022.konvens-1.11/):
+
+   @InProceedings{geislinger-etal-2022-improved,
+      title={Improved Open Source Automatic Subtitling for Lecture Videos},
+      author={Robert Geislinger and Benjamin Milde and Chris Biemann},
+      booktitle={Proceedings of the 18th Conference on Natural Language Processing (KONVENS 2022)},
+      year={2022},
+      address={Potsdam, Germany},
+      pages={98--103}
+   }
 
 and for the German ASR model:
 
