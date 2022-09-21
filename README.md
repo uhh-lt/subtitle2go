@@ -198,14 +198,14 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
     
 optionally also [this paper](https://aclanthology.org/2022.konvens-1.11/):
 
-   @InProceedings{geislinger-etal-2022-improved,
-      title={Improved Open Source Automatic Subtitling for Lecture Videos},
-      author={Robert Geislinger and Benjamin Milde and Chris Biemann},
-      booktitle={Proceedings of the 18th Conference on Natural Language Processing (KONVENS 2022)},
-      year={2022},
-      address={Potsdam, Germany},
-      pages={98--103}
-   }
+     @InProceedings{geislinger-etal-2022-improved,
+        title={Improved Open Source Automatic Subtitling for Lecture Videos},
+        author={Robert Geislinger and Benjamin Milde and Chris Biemann},
+        booktitle={Proceedings of the 18th Conference on Natural Language Processing (KONVENS 2022)},
+        year={2022},
+        address={Potsdam, Germany},
+        pages={98--103}
+     }
 
 and for the German ASR model:
 
