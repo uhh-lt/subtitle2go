@@ -196,7 +196,7 @@ If you use Subtitle2Go in your academic work, please cite [this paper](http://ww
       address={Virtual Berlin, Germany}
     }
     
-optionally also [this paper](https://aclanthology.org/2022.konvens-1.11/):
+optionally also [this paper](https://aclanthology.org/2022.konvens-1.11/) for Subtitle2Go and the newest German ASR model:
 
      @InProceedings{geislinger-etal-2022-improved,
         title={Improved Open Source Automatic Subtitling for Lecture Videos},
@@ -207,7 +207,7 @@ optionally also [this paper](https://aclanthology.org/2022.konvens-1.11/):
         pages={98--103}
      }
 
-and for the German ASR model:
+and for the previous German ASR model:
 
     @InProceedings{milde-koehn-18-german-asr,
       author={Benjamin Milde and Arne K{\"o}hn},
