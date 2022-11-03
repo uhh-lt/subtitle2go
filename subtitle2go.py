@@ -354,7 +354,7 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
     # to the beginning of the next line
     for current in segments[1:]:
         currentL = current.split(' ')
-	if currentL[0].startswith((',', '.', '?', '!', "'", "n't")):
+        if currentL[0].startswith((',', '.', '?', '!', "'", "n't")):
             temp_segments[-1] += currentL[0]
             currentL = currentL[1:]
         temp_segments.append(' '.join(currentL))
