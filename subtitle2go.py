@@ -368,7 +368,6 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
         temp_segments.append(' '.join(currentL))
     segments = temp_segments
 
-
     # Cuts the segments in words, removes empty objects and
     # and creates the sequences object
     for segment in segments:
@@ -380,7 +379,12 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
             begin_segment = vtt[word_counter + 2][1]
         else:
             begin_segment = vtt[word_counter + 1][1]
-        end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
+        # this check is a workaround to not get index out a range error which may happen (why? didn't want to get deep into the segmentation code)
+        if (word_counter + segment_length)<len(vtt):
+            end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
+        else: 
+            # use last segment as end_segment
+            end_segment = vtt[-1][1] + vtt[-1][2] 
         sequences.append([string_segment, begin_segment, end_segment])
         word_counter = word_counter + segment_length
     
