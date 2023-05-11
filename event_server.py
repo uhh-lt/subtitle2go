@@ -28,6 +28,7 @@ import subprocess
 import fcntl
 import os
 import signal
+import psutil
 
 __author__ = 'Benjamin Milde'
 
@@ -75,6 +76,22 @@ def status_with_id(jobid):
         return jsonify(current_jobs[jobid])
     else:
         return jsonify({'error': 'could not find jobid in current jobs.'})
+
+@app.route('/load')
+def check_current_load():
+    max_parallel_processes = 60
+
+    subtitle2go_processes = 0
+    for p in psutil.process_iter():
+        if "subtitle2go.py" in "".join(p.cmdline()):
+            subtitle2go_processes += 1
+
+    response = dict()
+    response['current_processes'] = subtitle2go_processes
+    # true if free resources are available, false if not
+    response['takes_job'] = subtitle2go_processes < max_parallel_processes
+
+    return jsonify(response)
 
 @app.route('/start', methods=['POST'])
 def start():
