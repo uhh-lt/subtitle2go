@@ -45,6 +45,10 @@ import json
 import time
 import sys
 
+import requests
+
+
+
 start_time = time.time()
 
 kaldi_feature_factor = 3.00151874884282680911
@@ -243,6 +247,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     except ffmpeg.Error as e:
         status.publish_status('Audio extraction failed.')
         status.publish_status(f'Error message is: {e.stderr}')
+        send_error()
         sys.exit(-1)
 
     status.publish_status('Audio extracted.')
@@ -255,6 +260,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     except Exception as e:
         status.publish_status('Audio segmentation failed.')
         status.publish_status(f'Error message is: {e}')
+        send_error()
         sys.exit(-1)
     
     # Write scp and spk2utt file
@@ -273,6 +279,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
         status.publish_status('ASR finished.')
     else:
         status.publish_status('ASR error.')
+        send_error()
         sys.exit(-1)
 
     # Cleanup tmp files
@@ -285,6 +292,7 @@ def asr(filenameS_hash, filename, asr_beamsize=13, asr_max_active=8000, acoustic
     except Exception as e:
         status.publish_status(f'Removing files failed.')
         status.publish_status(f'Error message is: {e}')
+        send_error()
 
     status.publish_status('VTT finished.')
 
@@ -360,7 +368,6 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
         temp_segments.append(' '.join(currentL))
     segments = temp_segments
 
-
     # Cuts the segments in words, removes empty objects and
     # and creates the sequences object
     for segment in segments:
@@ -372,7 +379,12 @@ def segmentation(vtt, model_spacy, beam_size, ideal_token_len, len_reward_factor
             begin_segment = vtt[word_counter + 2][1]
         else:
             begin_segment = vtt[word_counter + 1][1]
-        end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
+        # this check is a workaround to not get index out a range error which may happen (why? didn't want to get deep into the segmentation code)
+        if (word_counter + segment_length)<len(vtt):
+            end_segment = vtt[word_counter + segment_length][1] + vtt[word_counter + segment_length][2]
+        else: 
+            # use last segment as end_segment
+            end_segment = vtt[-1][1] + vtt[-1][2] 
         sequences.append([string_segment, begin_segment, end_segment])
         word_counter = word_counter + segment_length
     
@@ -409,9 +421,21 @@ def create_subtitle(sequences, subtitle_format, filenameS):
     except Exception as e:
         status.publish_status('Subtitle creation failed.')
         status.publish_status(f'error message is: {e}')
+        send_error()
         sys.exit(-1)
 
     status.publish_status('Finished subtitle creation.')
+
+def send_error():
+    if (callback_url):
+        d = {'message': 'false'}
+        r = requests.put(callback_url, data = d)
+
+def send_success():
+    if (callback_url):
+        d = {'message': 'true'}
+        r = requests.put(callback_url, data = d)
+
 
 if __name__ == '__main__':
     # Argument parser
@@ -428,6 +452,12 @@ if __name__ == '__main__':
 
     parser.add_argument('-m', '--model-yaml', help='Kaldi model used for decoding (yaml config).',
                                      type=str, default='models/kaldi_tuda_de_nnet3_chain2_de_683k.yaml')
+
+    parser.add_argument('-i', '--id', help='Manually sets the file id', type=str,
+                        required=False)
+
+    parser.add_argument('-c', '--callback-url', help='Sets a callback URL to notify when process is finished or something went off', type=str,
+                        required=False)
 
     parser.add_argument('--rnn-rescore', help='Do RNNLM rescoring of the decoder output (experimental,'
                                               ' needs more testing).',
@@ -479,8 +509,14 @@ if __name__ == '__main__':
     pdf_path = args.pdf
     model_kaldi = args.model_yaml
     debug_word_timing = args.debug
+    file_id=args.id
+    callback_url=args.callback_url
 
-    filenameS_hash = hex(abs(hash(filenameS)))[2:]
+    if (file_id):
+        filenameS_hash = file_id    
+    else:
+        filenameS_hash = hex(abs(hash(filenameS)))[2:] 
+
     ensure_dir('tmp/')
 
     # Init status class
@@ -517,3 +553,4 @@ if __name__ == '__main__':
     create_subtitle(sequences, subtitle_format, filenameS)
 
     status.publish_status('Job finished successfully.')
+    send_success()

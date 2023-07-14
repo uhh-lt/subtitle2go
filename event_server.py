@@ -22,7 +22,13 @@ import redis
 import json
 
 from werkzeug.serving import WSGIRequestHandler
-from flask import jsonify, json, Response
+from flask import jsonify, json, request, Response
+
+import subprocess
+import fcntl
+import os
+import signal
+import psutil
 
 __author__ = 'Benjamin Milde'
 
@@ -70,6 +76,64 @@ def status_with_id(jobid):
         return jsonify(current_jobs[jobid])
     else:
         return jsonify({'error': 'could not find jobid in current jobs.'})
+
+@app.route('/load')
+def check_current_load():
+    max_parallel_processes = 60
+
+    subtitle2go_processes = 0
+    for p in psutil.process_iter():
+        if "subtitle2go.py" in "".join(p.cmdline()):
+            subtitle2go_processes += 1
+
+    response = dict()
+    response['current_processes'] = subtitle2go_processes
+    # true if free resources are available, false if not
+    response['takes_job'] = subtitle2go_processes < max_parallel_processes
+
+    return jsonify(response)
+
+@app.route('/start', methods=['POST'])
+def start():
+    request_data = request.get_json()
+
+    filename = request_data['filename']
+    language = request_data['language']
+    callback_url = request_data['url'] + "/" + request_data['id']
+
+    # calculate and return id
+    filenameS = filename.rpartition('.')[0] # Filename without file extension
+    filenameS_hash = hex(abs(hash(filenameS)))[2:]
+
+    # prepare logging
+    log_file=filename+"_"+request_data['id']+".log"
+
+    # run subtitle2go in background with the calculated id
+    with open(log_file,"w+") as out:
+        p = subprocess.Popen(["python","subtitle2go.py",filename,"-l",language,"--with-redis-updates","-i",filenameS_hash,"-c",callback_url],stdout=out,stderr=out)
+
+    id = str(p.pid) + '_' + filenameS_hash
+    return id
+
+@app.route('/stop', methods=['POST'])
+def stop():
+    request_data = request.get_json()
+
+    subtitle2goId = request_data['speech2TextId']
+
+    pid = int(subtitle2goId.split("_")[0]);
+
+    # kill the process if still running
+    killed = False
+    try:
+        os.kill(pid, signal.SIGKILL)
+    except Exception as e:
+        pass
+    else:
+        killed = True
+        del current_jobs[subtitle2goId]
+    return str(killed)
+
 
 @app.route('/clear')
 def clear_finished():
