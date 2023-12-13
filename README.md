@@ -160,6 +160,16 @@ optional arguments:
 
 ## FAQ
 
+### Error indicating a problem with "libcudnn_ops_infer.so.8"
+
+It might be neccessary to reinstall torch with an older version of Cuda:
+
+```
+pip3 install --force-reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+(Dec 2023)
+
 ### Error message ImportError: libkaldi-base.so: cannot open shared object file: No such file or directory
 
 You have to load the path.sh into your shell. You need to run:
